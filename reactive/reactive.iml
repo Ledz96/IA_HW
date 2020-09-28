@@ -19,7 +19,9 @@
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../logist/logist.jar!/" />
         </CLASSES>
-        <JAVADOC />
+        <JAVADOC>
+          <root url="jar://$MODULE_DIR$/../logist/doc.zip!/doc" />
+        </JAVADOC>
         <SOURCES>
           <root url="jar://$MODULE_DIR$/../logist/logist.jar!/" />
         </SOURCES>
