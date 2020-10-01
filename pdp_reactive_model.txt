@@ -7,7 +7,7 @@ action = (destination_city, deliver_task)
 	maybe only neighbors of current_city instead of all possible destinations?
 
 reward(s,a) =
-	task_reward - task_cost (task_weight * movement_cost)		if task
+	task_reward - task_cost [task_weight * movement_cost]		if task
 	movement_cost												if not task
 
 probability of transition T(s,a,s') =
