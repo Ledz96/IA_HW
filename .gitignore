@@ -1,3 +1,6 @@
 .idea/
 .settings/
 bin/
+
+reactive.iml
+history.xml
