@@ -1,0 +1,20 @@
+state =
+	(current_city, task_destination)	if task
+	(current_city, null)				if not task
+
+action = (destination_city, deliver_task)
+	during learning, only possible actions are available (action with deliver_task == true only for task_destination)
+	maybe only neighbors of current_city instead of all possible destinations?
+
+reward(s,a) =
+	task_reward - task_cost (task_weight * movement_cost)		if task
+	movement_cost												if not task
+
+probability of transition T(s,a,s') =
+	1	if s' is destination_city of a
+	0	otherwise
+	
+	NO! there can be multiple states depending on if there is a task available in the destination city
+	we shall use the TaskDistribution.probability(current_city, destination_city)
+
+probability of transition T(s,a,s') = TaskDistribution.probability(current_city, destination_city)
