@@ -17,6 +17,8 @@ import logist.topology.Topology.City;
 public class ReactiveTemplate implements ReactiveBehavior
 {
 	private HashMap<City, List<State>> cityStates = new HashMap<>();
+	private HashMap<State, Double> stateProb = new HashMap<>();
+	
 	private HashMap<State, Double> vValue;
 	private HashMap<State, Action> bestAction;
 
@@ -26,11 +28,11 @@ public class ReactiveTemplate implements ReactiveBehavior
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
-
-		// init cityStates with all possible states for each city
-
+		
 		for (City city : topology.cities())
 		{
+			// init cityStates with all possible states for each city
+			
 			List<State> states = Stream.concat(
 					topology.cities().stream()
 							.filter(dest -> dest != city)
@@ -39,6 +41,10 @@ public class ReactiveTemplate implements ReactiveBehavior
 					.collect(Collectors.toList());
 
 			cityStates.put(city, states);
+			
+			// calc probabilities for each state
+			
+			states.stream().map()
 		}
 	}
 
