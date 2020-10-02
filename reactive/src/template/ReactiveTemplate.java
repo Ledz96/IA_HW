@@ -1,6 +1,11 @@
 package template;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import logist.simulation.Vehicle;
 import logist.agent.Agent;
@@ -13,44 +18,37 @@ import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
 
-public class ReactiveTemplate implements ReactiveBehavior {
-
-	private Random random;
-	private double pPickup;
-	private int numActions;
-	private Agent myAgent;
-
+public class ReactiveTemplate implements ReactiveBehavior
+{
+	private HashMap<City, List<State>> cityStates = new HashMap<>();
+	
 	@Override
-	public void setup(Topology topology, TaskDistribution td, Agent agent) {
-
+	public void setup(Topology topology, TaskDistribution td, Agent agent)
+	{
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
-		Double discount = agent.readProperty("discount-factor", Double.class,
-				0.95);
-
-		this.random = new Random();
-		this.pPickup = discount;
-		this.numActions = 0;
-		this.myAgent = agent;
+		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
+		
+		// init cityStates with all possible states for each city
+		
+		for (City city : topology.cities())
+		{
+			List<State> states = Stream.concat(
+					topology.cities().stream()
+							.filter(dest -> dest != city)
+							.map(dest -> new State(city, dest)),
+					Stream.of(new State(city, null)))
+					.collect(Collectors.toList());
+			
+			cityStates.put(city, states);
+		}
 	}
-
+	
 	@Override
-	public Action act(Vehicle vehicle, Task availableTask) {
-		Action action;
-
-		if (availableTask == null || random.nextDouble() > pPickup) {
-			City currentCity = vehicle.getCurrentCity();
-			action = new Move(currentCity.randomNeighbor(random));
-		} else {
-			action = new Pickup(availableTask);
-		}
+	public Action act(Vehicle vehicle, Task availableTask)
+	{
+		// TODO
 		
-		if (numActions >= 1) {
-			System.out.println("The total profit after "+numActions+" actions is "+myAgent.getTotalProfit()+" (average profit: "+(myAgent.getTotalProfit() / (double)numActions)+")");
-		}
-		numActions++;
-		
-		return action;
+		return null;
 	}
-
 }
