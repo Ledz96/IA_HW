@@ -113,7 +113,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 		
 		if (numActions >= 1)
 		{
-			System.out.printf("[Reactive] avg profit = %f (%d actions)%n",
+			System.out.printf("[Reactive %.2f] avg profit = %f (%d actions)%n",
+			                  discountFactor,
 			                  myAgent.getTotalProfit() / (double) numActions,
 			                  myAgent.getTotalProfit());
 		}

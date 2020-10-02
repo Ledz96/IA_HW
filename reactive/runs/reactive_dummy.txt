@@ -1,0 +1,1 @@
+[Dummy] avg profit = 36251,113102 (97116732 actions)

@@ -1,0 +1,1 @@
+[Random] avg profit = 31184,827565 (102722822 actions)
