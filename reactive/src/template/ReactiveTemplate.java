@@ -1,10 +1,12 @@
 package template;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javafx.util.Pair;
 import logist.simulation.Vehicle;
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
@@ -17,8 +19,9 @@ import logist.topology.Topology.City;
 public class ReactiveTemplate implements ReactiveBehavior
 {
 	private HashMap<City, List<State>> cityStates = new HashMap<>();
-	private HashMap<State, Double> vValue;
-	private HashMap<State, Action> bestAction;
+	private HashMap<State, Double> vValue = new HashMap<>();
+	private HashMap<State, List<ActionReactive>> stateActionSpace = new HashMap<>();
+	private HashMap<Pair<State,ActionReactive>, Double> stateActionRewards = new HashMap<>();
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
@@ -37,6 +40,26 @@ public class ReactiveTemplate implements ReactiveBehavior
 							.map(dest -> new State(city, dest)),
 					Stream.of(new State(city, null)))
 					.collect(Collectors.toList());
+
+			double maxReward = 0;
+
+			List<ActionReactive> actionList = new ArrayList<>();
+			states.forEach(s -> {
+				if (s.isTaskState()) {
+					ActionReactive a = new ActionReactive(s.getTaskDestination(), true);
+					actionList.add(a);
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+				}
+
+				s.getCurrentCity().neighbors().forEach(c -> {
+					ActionReactive a = new ActionReactive(c, false;
+					actionList.add(a));
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+				});
+
+				stateActionSpace.put(s, actionList);
+			});
+
 
 			cityStates.put(city, states);
 		}
