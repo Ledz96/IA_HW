@@ -1,5 +1,6 @@
 package template;
 
+import java.util.HashMap;
 import java.util.Random;
 
 import logist.simulation.Vehicle;
@@ -19,6 +20,9 @@ public class ReactiveTemplate implements ReactiveBehavior {
 	private double pPickup;
 	private int numActions;
 	private Agent myAgent;
+
+	private HashMap<State, Double> vValue;
+	private HashMap<State, Action> bestAction;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent) {
