@@ -56,13 +56,13 @@ public class ReactiveTemplate implements ReactiveBehavior
 				if (s.isTaskState()) {
 					ActionReactive a = new ActionReactive(s.getTaskDestination(), true);
 					actionList.add(a);
-					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - s.getCurrentCity().distanceTo(s.getTaskDestination()) * agent.vehicles().get(0).costPerKm()));
 				}
 
 				s.getCurrentCity().neighbors().forEach(c -> {
 					ActionReactive a = new ActionReactive(c, false);
 					actionList.add(a);
-					stateActionRewards.put(new Pair<>(s, a), (double) -agent.vehicles().get(0).costPerKm());
+					stateActionRewards.put(new Pair<>(s, a), (double) - s.getCurrentCity().distanceTo(c) * agent.vehicles().get(0).costPerKm());
 				});
 				
 				stateActionSpace.put(s, actionList);
