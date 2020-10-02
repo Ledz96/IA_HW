@@ -42,5 +42,10 @@ public class ActionReactive {
     {
         return 31*31*destination.hashCode() + Boolean.hashCode(isDeliveringTask);
     }
-
+    
+    @Override
+    public String toString()
+    {
+        return String.format("ActionReactive(%s, %b)", destination, isDeliveringTask);
+    }
 }

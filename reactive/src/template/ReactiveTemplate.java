@@ -50,26 +50,27 @@ public class ReactiveTemplate implements ReactiveBehavior
 			
 			// init action list and action reward table
 			
-			List<ActionReactive> actionList = new ArrayList<>();
 			states.forEach(s -> {
+				List<ActionReactive> actionList = new ArrayList<>();
+				
 				if (s.isTaskState()) {
 					ActionReactive a = new ActionReactive(s.getTaskDestination(), true);
 					actionList.add(a);
-					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - s.getCurrentCity().distanceTo(s.getTaskDestination()) * agent.vehicles().get(0).costPerKm()));
 				}
 
 				s.getCurrentCity().neighbors().forEach(c -> {
 					ActionReactive a = new ActionReactive(c, false);
 					actionList.add(a);
-					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+					stateActionRewards.put(new Pair<>(s, a), (double) - s.getCurrentCity().distanceTo(c) * agent.vehicles().get(0).costPerKm());
 				});
-
+				
 				stateActionSpace.put(s, actionList);
 			});
 
 			// initialize v value
 
-			states.forEach(state -> vValue.put(state, Double.MIN_VALUE));
+			states.forEach(state -> vValue.put(state, -Double.MAX_VALUE));
 		});
 
 		train();
@@ -83,28 +84,29 @@ public class ReactiveTemplate implements ReactiveBehavior
             cityStates.values().stream().flatMap(List::stream).forEach(s -> {
                 stateActionSpace.get(s).forEach(a -> {
                     double qValue = stateActionRewards.get(new Pair<>(s, a)) +
-                            discountFactor*stateProbabilities.entrySet().stream()
+                            discountFactor * stateProbabilities.entrySet().stream()
                                 .filter(e -> e.getKey().getCurrentCity() == a.getDestination())
                                 .map(e -> e.getValue() * vValue.get(e.getKey()))
                                 .reduce(0.0, Double::sum);
 
-                    if (qValue > vValue.get(s)) {
+                    if (qValue > vValue.get(s))
+                    {
                         hasConverged.set(false);
                         vValue.put(s, qValue);
                         stateActionBest.put(s, a);
                     }
-
                 });
-
             });
-        } while (!hasConverged.get());
+        }
+        while (!hasConverged.get());
     }
 
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask)
 	{
-		// TODO
+		State state = new State(vehicle.getCurrentCity(), availableTask == null ? null : availableTask.deliveryCity);
+		ActionReactive action = stateActionBest.get(state);
 		
-		return null;
+		return action.isDeliveringTask() ? new Action.Pickup(availableTask) : new Action.Move(action.getDestination());
 	}
 }

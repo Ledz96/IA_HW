@@ -52,10 +52,16 @@ public class State
 	{
 		if (this == obj)
 			return true;
-		if (obj == null || getClass() != obj.getClass())
+		if (!(obj instanceof State))
 			return false;
 
 		State state = (State) obj;
-		return currentCity.equals(state.getCurrentCity()) && taskDestination.equals(state.getTaskDestination());
+		return currentCity == state.getCurrentCity() && taskDestination == state.getTaskDestination();
+	}
+	
+	@Override
+	public String toString()
+	{
+		return String.format("State(%s, %s)", currentCity, taskDestination);
 	}
 }
