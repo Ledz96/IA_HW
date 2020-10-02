@@ -2,7 +2,6 @@ package template;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,7 +21,7 @@ public class ReactiveTemplate implements ReactiveBehavior
 	
 	private HashMap<State, Double> vValue;
 	private HashMap<State, Action> bestAction;
-
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
@@ -40,20 +39,15 @@ public class ReactiveTemplate implements ReactiveBehavior
 							.map(dest -> new State(city, dest)),
 					Stream.of(new State(city, null)))
 					.collect(Collectors.toList());
-
+			
 			cityStates.put(city, states);
 			
 			// calc probabilities for each state
 			
 			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
 		}
-		
-//		// check probabilities sum up to 1
-//		Object a = stateProbabilities.entrySet().stream()
-//				.collect(Collectors.groupingBy(dio -> dio.getKey().getCurrentCity(),
-//				                               Collectors.summarizingDouble(Map.Entry::getValue)));
 	}
-
+	
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask)
 	{
@@ -61,5 +55,4 @@ public class ReactiveTemplate implements ReactiveBehavior
 		
 		return null;
 	}
-
 }
