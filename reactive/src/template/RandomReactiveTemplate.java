@@ -46,7 +46,7 @@ public class RandomReactiveTemplate implements ReactiveBehavior
 		}
 		
 		if (numActions >= 1) {
-			System.out.println("The total profit after "+numActions+" actions is "+myAgent.getTotalProfit()+" (average profit: "+(myAgent.getTotalProfit() / (double)numActions)+")");
+			System.out.println("The total profit after "+numActions+" actions is " + myAgent.getTotalProfit() + " (average profit: "+(myAgent.getTotalProfit() / (double)numActions)+")");
 		}
 		numActions++;
 		
