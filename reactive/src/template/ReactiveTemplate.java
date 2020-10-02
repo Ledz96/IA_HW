@@ -54,8 +54,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 				}
 
 				s.getCurrentCity().neighbors().forEach(c -> {
-					ActionReactive a = new ActionReactive(c, false;
-					actionList.add(a));
+					ActionReactive a = new ActionReactive(c, false);
+					actionList.add(a);
 					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
 				});
 
