@@ -38,10 +38,15 @@ public class ReactiveTemplate implements ReactiveBehavior
 							.map(dest -> new State(city, dest)),
 					Stream.of(new State(city, null)))
 					.collect(Collectors.toList());
-
-
-            // compute action list and rewards for each state
-
+			
+			cityStates.put(city, states);
+			
+			// calc probabilities for each state
+			
+			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
+			
+			// init action list and action reward table
+			
 			List<ActionReactive> actionList = new ArrayList<>();
 			states.forEach(s -> {
 				if (s.isTaskState()) {
@@ -58,13 +63,6 @@ public class ReactiveTemplate implements ReactiveBehavior
 
 				stateActionSpace.put(s, actionList);
 			});
-
-
-			cityStates.put(city, states);
-
-			// calc probabilities for each state
-
-			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
 
 			// initialize v value
 
