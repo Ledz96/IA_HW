@@ -40,7 +40,7 @@ public class ReactiveTemplate implements ReactiveBehavior
 					.collect(Collectors.toList());
 
 
-			double maxReward = 0;
+            // compute action list and rewards for each state
 
 			List<ActionReactive> actionList = new ArrayList<>();
 			states.forEach(s -> {
@@ -65,6 +65,10 @@ public class ReactiveTemplate implements ReactiveBehavior
 			// calc probabilities for each state
 
 			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
+
+			// initialize v value
+
+			states.forEach(state -> vValue.put(state, Double.MIN_VALUE));
 		}
 	}
 
