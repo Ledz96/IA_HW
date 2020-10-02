@@ -24,6 +24,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private HashMap<State, ActionReactive> stateActionBest = new HashMap<>();
 
 	private Double discountFactor;
+	private int numActions;
+	private Agent myAgent;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
@@ -31,6 +33,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
         discountFactor = agent.readProperty("discount-factor", Double.class, 0.95);
+		numActions = 0;
+		myAgent = agent;
 
 		topology.cities().forEach(city -> {
 			// init cityStates with all possible states for each city
@@ -106,6 +110,14 @@ public class ReactiveTemplate implements ReactiveBehavior
 	{
 		State state = new State(vehicle.getCurrentCity(), availableTask == null ? null : availableTask.deliveryCity);
 		ActionReactive action = stateActionBest.get(state);
+		
+		if (numActions >= 1)
+		{
+			System.out.printf("[Reactive] avg profit = %f (%d actions)%n",
+			                  myAgent.getTotalProfit() / (double) numActions,
+			                  myAgent.getTotalProfit());
+		}
+		numActions++;
 		
 		return action.isDeliveringTask() ? new Action.Pickup(availableTask) : new Action.Move(action.getDestination());
 	}

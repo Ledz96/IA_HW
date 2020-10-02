@@ -1,34 +1,26 @@
 package template;
 
-import java.util.Random;
-
-import logist.simulation.Vehicle;
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
 import logist.plan.Action;
 import logist.plan.Action.Move;
 import logist.plan.Action.Pickup;
+import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
 
-public class RandomReactiveTemplate implements ReactiveBehavior
+import java.util.Random;
+
+public class DummyReactiveTemplate implements ReactiveBehavior
 {
-	private Random random;
-	private double pPickup;
 	private int numActions;
 	private Agent myAgent;
-
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
-		// Reads the discount factor from the agents.xml file.
-		// If the property is not present it defaults to 0.95
-		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
-
-		this.random = new Random();
-		this.pPickup = discount;
 		this.numActions = 0;
 		this.myAgent = agent;
 	}
@@ -38,10 +30,10 @@ public class RandomReactiveTemplate implements ReactiveBehavior
 	{
 		Action action;
 
-		if (availableTask == null || random.nextDouble() > pPickup)
+		if (availableTask == null)
 		{
 			City currentCity = vehicle.getCurrentCity();
-			action = new Move(currentCity.randomNeighbor(random));
+			action = new Move(currentCity.randomNeighbor(new Random()));
 		}
 		else
 		{
@@ -50,7 +42,7 @@ public class RandomReactiveTemplate implements ReactiveBehavior
 		
 		if (numActions >= 1)
 		{
-			System.out.printf("[Random] avg profit = %f (%d actions)%n",
+			System.out.printf("[Dummy] avg profit = %f (%d actions)%n",
 			                  myAgent.getTotalProfit() / (double) numActions,
 			                  myAgent.getTotalProfit());
 		}
