@@ -1,6 +1,7 @@
 package template;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,18 +19,20 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private HashMap<City, List<State>> cityStates = new HashMap<>();
 	private HashMap<State, Double> vValue = new HashMap<>();
 	private HashMap<State, List<ActionReactive>> stateActionSpace = new HashMap<>();
-	private HashMap<Map.Entry<State,ActionReactive>, Double> stateActionRewards = new HashMap<>();
+	private HashMap<Pair<State,ActionReactive>, Double> stateActionRewards = new HashMap<>();
 	private HashMap<State, Double> stateProbabilities = new HashMap<>();
+	private HashMap<State, ActionReactive> stateActionBest = new HashMap<>();
+
+	private Double discountFactor;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
-		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
+        discountFactor = agent.readProperty("discount-factor", Double.class, 0.95);
 
-		for (City city : topology.cities())
-		{
+		topology.cities().forEach(city -> {
 			// init cityStates with all possible states for each city
 
 			List<State> states = Stream.concat(
@@ -52,13 +55,13 @@ public class ReactiveTemplate implements ReactiveBehavior
 				if (s.isTaskState()) {
 					ActionReactive a = new ActionReactive(s.getTaskDestination(), true);
 					actionList.add(a);
-					stateActionRewards.put(new AbstractMap.SimpleEntry<State, ActionReactive>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
 				}
 
 				s.getCurrentCity().neighbors().forEach(c -> {
 					ActionReactive a = new ActionReactive(c, false);
 					actionList.add(a);
-					stateActionRewards.put(new AbstractMap.SimpleEntry<State, ActionReactive>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
+					stateActionRewards.put(new Pair<>(s, a), (double) (td.reward(s.getCurrentCity(), s.getTaskDestination()) - agent.vehicles().get(0).costPerKm()));
 				});
 
 				stateActionSpace.put(s, actionList);
@@ -67,8 +70,35 @@ public class ReactiveTemplate implements ReactiveBehavior
 			// initialize v value
 
 			states.forEach(state -> vValue.put(state, Double.MIN_VALUE));
-		}
+		});
+
+		train();
 	}
+
+	private void train()
+    {
+        AtomicBoolean hasConverged = new AtomicBoolean();
+        do {
+            hasConverged.set(true);
+            cityStates.values().stream().flatMap(List::stream).forEach(s -> {
+                stateActionSpace.get(s).forEach(a -> {
+                    double qValue = stateActionRewards.get(new Pair<>(s, a)) + 
+                            discountFactor*stateProbabilities.entrySet().stream()
+                                .filter(e -> e.getKey().getCurrentCity() == a.getDestination())
+                                .map(e -> e.getValue() * vValue.get(e.getKey()))
+                                .reduce(0.0, Double::sum);
+
+                    if (qValue > vValue.get(s)) {
+                        hasConverged.set(false);
+                        vValue.put(s, qValue);
+                        stateActionBest.put(s, a);
+                    }
+
+                });
+
+            });
+        } while (!hasConverged.get());
+    }
 
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask)
