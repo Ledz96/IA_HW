@@ -1,6 +1,5 @@
 package template;
 
-import static java.lang.System.out;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
