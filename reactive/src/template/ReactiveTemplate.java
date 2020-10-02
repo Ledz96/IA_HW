@@ -22,6 +22,7 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private HashMap<State, Double> vValue = new HashMap<>();
 	private HashMap<State, List<ActionReactive>> stateActionSpace = new HashMap<>();
 	private HashMap<Pair<State,ActionReactive>, Double> stateActionRewards = new HashMap<>();
+	private HashMap<State, Double> stateProbabilities = new HashMap<>();
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
@@ -30,16 +31,17 @@ public class ReactiveTemplate implements ReactiveBehavior
 		// If the property is not present it defaults to 0.95
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
 
-		// init cityStates with all possible states for each city
-
 		for (City city : topology.cities())
 		{
+			// init cityStates with all possible states for each city
+
 			List<State> states = Stream.concat(
 					topology.cities().stream()
 							.filter(dest -> dest != city)
 							.map(dest -> new State(city, dest)),
 					Stream.of(new State(city, null)))
 					.collect(Collectors.toList());
+
 
 			double maxReward = 0;
 
@@ -62,6 +64,10 @@ public class ReactiveTemplate implements ReactiveBehavior
 
 
 			cityStates.put(city, states);
+
+			// calc probabilities for each state
+
+			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
 		}
 	}
 
@@ -72,5 +78,4 @@ public class ReactiveTemplate implements ReactiveBehavior
 		
 		return null;
 	}
-
 }
