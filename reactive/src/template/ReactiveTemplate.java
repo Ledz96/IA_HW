@@ -1,9 +1,7 @@
 package template;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,8 +9,6 @@ import logist.simulation.Vehicle;
 import logist.agent.Agent;
 import logist.behavior.ReactiveBehavior;
 import logist.plan.Action;
-import logist.plan.Action.Move;
-import logist.plan.Action.Pickup;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.topology.Topology;
@@ -21,16 +17,18 @@ import logist.topology.Topology.City;
 public class ReactiveTemplate implements ReactiveBehavior
 {
 	private HashMap<City, List<State>> cityStates = new HashMap<>();
-	
+	private HashMap<State, Double> vValue;
+	private HashMap<State, Action> bestAction;
+
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
 		Double discount = agent.readProperty("discount-factor", Double.class, 0.95);
-		
+
 		// init cityStates with all possible states for each city
-		
+
 		for (City city : topology.cities())
 		{
 			List<State> states = Stream.concat(
@@ -39,11 +37,11 @@ public class ReactiveTemplate implements ReactiveBehavior
 							.map(dest -> new State(city, dest)),
 					Stream.of(new State(city, null)))
 					.collect(Collectors.toList());
-			
+
 			cityStates.put(city, states);
 		}
 	}
-	
+
 	@Override
 	public Action act(Vehicle vehicle, Task availableTask)
 	{
@@ -51,4 +49,5 @@ public class ReactiveTemplate implements ReactiveBehavior
 		
 		return null;
 	}
+
 }
