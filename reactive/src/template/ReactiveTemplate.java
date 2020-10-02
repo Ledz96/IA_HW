@@ -2,6 +2,7 @@ package template;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -17,7 +18,7 @@ import logist.topology.Topology.City;
 public class ReactiveTemplate implements ReactiveBehavior
 {
 	private HashMap<City, List<State>> cityStates = new HashMap<>();
-	private HashMap<State, Double> stateProb = new HashMap<>();
+	private HashMap<State, Double> stateProbabilities = new HashMap<>();
 	
 	private HashMap<State, Double> vValue;
 	private HashMap<State, Action> bestAction;
@@ -44,8 +45,13 @@ public class ReactiveTemplate implements ReactiveBehavior
 			
 			// calc probabilities for each state
 			
-			states.stream().map()
+			states.forEach(state -> stateProbabilities.put(state, td.probability(state.getCurrentCity(), state.getTaskDestination())));
 		}
+		
+//		// check probabilities sum up to 1
+//		Object a = stateProbabilities.entrySet().stream()
+//				.collect(Collectors.groupingBy(dio -> dio.getKey().getCurrentCity(),
+//				                               Collectors.summarizingDouble(Map.Entry::getValue)));
 	}
 
 	@Override
