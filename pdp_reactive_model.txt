@@ -10,11 +10,4 @@ reward(s,a) =
 	task_reward - task_cost [task_weight * movement_cost]		if task
 	movement_cost												if not task
 
-probability of transition T(s,a,s') =
-	1	if s' is destination_city of a
-	0	otherwise
-	
-	NO! there can be multiple states depending on if there is a task available in the destination city
-	we shall use the TaskDistribution.probability(current_city, destination_city)
-
-probability of transition T(s,a,s') = TaskDistribution.probability(current_city, destination_city)
+probability of transition T(s,a,s') = TaskDistribution.probability(destination_city, new_destination_city)
