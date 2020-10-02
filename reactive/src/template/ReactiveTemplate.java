@@ -82,7 +82,7 @@ public class ReactiveTemplate implements ReactiveBehavior
             hasConverged.set(true);
             cityStates.values().stream().flatMap(List::stream).forEach(s -> {
                 stateActionSpace.get(s).forEach(a -> {
-                    double qValue = stateActionRewards.get(new Pair<>(s, a)) + 
+                    double qValue = stateActionRewards.get(new Pair<>(s, a)) +
                             discountFactor*stateProbabilities.entrySet().stream()
                                 .filter(e -> e.getKey().getCurrentCity() == a.getDestination())
                                 .map(e -> e.getValue() * vValue.get(e.getKey()))
