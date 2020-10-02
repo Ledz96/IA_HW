@@ -1,0 +1,10 @@
+logist.LogistException: agent reactive-rla timed out: null
+	at logist.agent.TimeoutGuard.schedule(TimeoutGuard.java:54)
+	at logist.agent.ReactiveAgent.setup(ReactiveAgent.java:52)
+	at logist.simulation.Manager.setup(Manager.java:86)
+	at logist.simulation.Manager.run(Manager.java:59)
+	at logist.LogistPlatform.main(LogistPlatform.java:126)
+Caused by: java.util.concurrent.TimeoutException
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:204)
+	at logist.agent.TimeoutGuard.schedule(TimeoutGuard.java:46)
+	... 4 more

@@ -69,8 +69,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 			});
 
 			// initialize v value
-
-			states.forEach(state -> vValue.put(state, - 0.5 * Double.MAX_VALUE));
+			
+			states.forEach(state -> vValue.put(state, - (double) (int) Double.MAX_VALUE));
 		});
 
 		train();
