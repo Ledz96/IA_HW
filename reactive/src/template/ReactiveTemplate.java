@@ -83,8 +83,11 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private void train()
     {
         AtomicBoolean hasConverged = new AtomicBoolean();
+        int iterations = 0;
+        
         do {
             hasConverged.set(true);
+            iterations++;
             cityStates.values().stream().flatMap(List::stream).forEach(s -> {
                 stateActionSpace.get(s).forEach(a -> {
                     double qValue = stateActionRewards.get(new Pair<>(s, a)) +
@@ -103,6 +106,8 @@ public class ReactiveTemplate implements ReactiveBehavior
             });
         }
         while (!hasConverged.get());
+        
+        System.out.printf("Iterations: %d", iterations);
     }
 
 	@Override
