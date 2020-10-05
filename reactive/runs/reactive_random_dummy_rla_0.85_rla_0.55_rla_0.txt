@@ -1,0 +1,5 @@
+[Random] avg profit = 29792,360215 (99744822 actions)
+[Dummy] avg profit = 36225,828488 (112155165 actions)
+[Reactive 0,85] avg profit = 39056,206762 (139782164 actions)
+[Reactive 0,55] avg profit = 38277,824343 (135541776 actions)
+[Reactive 0,00] avg profit = 37738,791973 (133519846 actions)

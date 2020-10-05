@@ -1,0 +1,1 @@
+[Reactive] avg profit = 37568,868777 (122249099 actions)

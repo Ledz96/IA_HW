@@ -24,6 +24,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private HashMap<State, ActionReactive> stateActionBest = new HashMap<>();
 
 	private Double discountFactor;
+	private int numActions;
+	private Agent myAgent;
 
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
@@ -31,6 +33,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 		// Reads the discount factor from the agents.xml file.
 		// If the property is not present it defaults to 0.95
         discountFactor = agent.readProperty("discount-factor", Double.class, 0.95);
+		numActions = 0;
+		myAgent = agent;
 
 		topology.cities().forEach(city -> {
 			// init cityStates with all possible states for each city
@@ -69,8 +73,8 @@ public class ReactiveTemplate implements ReactiveBehavior
 			});
 
 			// initialize v value
-
-			states.forEach(state -> vValue.put(state, - 0.5 * Double.MAX_VALUE));
+			
+			states.forEach(state -> vValue.put(state, - (double) (int) Double.MAX_VALUE));
 		});
 
 		train();
@@ -79,8 +83,11 @@ public class ReactiveTemplate implements ReactiveBehavior
 	private void train()
     {
         AtomicBoolean hasConverged = new AtomicBoolean();
+        int iterations = 0;
+        
         do {
             hasConverged.set(true);
+            iterations++;
             cityStates.values().stream().flatMap(List::stream).forEach(s -> {
                 stateActionSpace.get(s).forEach(a -> {
                     double qValue = stateActionRewards.get(new Pair<>(s, a)) +
@@ -99,6 +106,8 @@ public class ReactiveTemplate implements ReactiveBehavior
             });
         }
         while (!hasConverged.get());
+        
+        System.out.printf("Iterations: %d", iterations);
     }
 
 	@Override
@@ -106,6 +115,15 @@ public class ReactiveTemplate implements ReactiveBehavior
 	{
 		State state = new State(vehicle.getCurrentCity(), availableTask == null ? null : availableTask.deliveryCity);
 		ActionReactive action = stateActionBest.get(state);
+		
+		if (numActions >= 1)
+		{
+			System.out.printf("[Reactive %.2f] avg profit = %f (%d actions)%n",
+			                  discountFactor,
+			                  myAgent.getTotalProfit() / (double) numActions,
+			                  myAgent.getTotalProfit());
+		}
+		numActions++;
 		
 		return action.isDeliveringTask() ? new Action.Pickup(availableTask) : new Action.Move(action.getDestination());
 	}
