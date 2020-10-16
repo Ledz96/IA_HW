@@ -1,0 +1,31 @@
+shortest number of actions (optimum for BFS) = best action (inductively proved?)
+
+
+state = (current_city, current_weight,
+	picked_up_tasks(source_city, destination_city, task_reward, task_weight),
+	available_tasks(source_city, destination_city, task_reward, task_weight))
+
+heuristic(s1) =
+	H1) distance of the farthest destination_city for the picked up tasks
+		(+ distance to s2's destination_city from s1's destination_city for tasks starting from s1's destination_city?) NO: doesn't respect distance property
+	H1b) distance of the farthest destination_city for all_tasks
+	H2) sum(min distance(city, destination_city) for city in topology, destination_city in set(city: all_tasks.destination_city))
+		(perfect for best case, may be not very useful for other cases)
+	H3) max(distance(task1.destination_city, task2.destination_city) for task1, task2 in all_tasks)
+	H4) max(H1b, H3)
+
+action = (destination_city, picked_up_task)
+	picked_up_task can be NULL if no task were picked up
+	picked_up_task != task if current_weight + task.weight > vehicle.max_weight
+
+transition(s,a) = (new_current_city, new_current_weight, new_picked_up_tasks, new_available_tasks)
+	with
+		new_current_city = a.destination_city
+		new_picked_up_tasks = picked_up_tasks
+			\union (picked_up_task if picked_up_task.destination_city != new_current_city)
+			\diff (task in picked_up_tasks: task if task.destination_city == new_current_city)
+		new_available_tasks = taskSet?
+		new_current_weight = sum(task in new_picked_up_tasks: task.weight)
+
+reward(s,a) = distance(s.current_city, a.destination_city) * vehicle.cost_per_km
+	+ (task in picked_up_tasks: task.reward if task.destination_city == new_current_city)
