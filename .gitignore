@@ -2,6 +2,6 @@
 .settings/
 bin/
 
-reactive.iml
+*.iml
 history.xml
 *.psd
