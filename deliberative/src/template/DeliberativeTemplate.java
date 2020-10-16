@@ -11,6 +11,8 @@ import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
 
+import java.util.HashSet;
+
 /**
  * An optimal planner for one vehicle.
  */
@@ -86,6 +88,15 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			// set current city
 			current = task.deliveryCity;
 		}
+		return plan;
+	}
+
+	private Plan BFS(Vehicle vehicle, TaskSet tasks) {
+		City currentCity = vehicle.getCurrentCity();
+		Plan plan = new Plan(currentCity);
+
+		State initialState = new State(currentCity, 0, new HashSet<>(), tasks);
+
 		return plan;
 	}
 
