@@ -3,51 +3,84 @@ package template;
 import logist.task.Task;
 import logist.topology.Topology;
 
+import java.util.AbstractMap;
 import java.util.Objects;
 import java.util.Set;
 
 public class State {
     private final Topology.City currentCity;
-    private final int currentWeight;
+    private final int residualCapacity;
     private final Set<Task> pickedUpTasks;
     private final Set<Task> availableTasks;
+    
+    private final AbstractMap.SimpleEntry<State, ActionDeliberative> previousChainLink;
+    private final int chainDepth;
+    
+    public Topology.City getCurrentCity() {
+        return currentCity;
+    }
+    
+    public int getResidualCapacity()
+    {
+        return residualCapacity;
+    }
+    
+    public Set<Task> getPickedUpTasks() {
+        return pickedUpTasks;
+    }
+    
+    public Set<Task> getAvailableTasks() {
+        return availableTasks;
+    }
+    
+    public AbstractMap.SimpleEntry<State, ActionDeliberative> getPreviousChainLink()
+    {
+        return previousChainLink;
+    }
+    
+    public int getChainDepth()
+    {
+        return chainDepth;
+    }
 
-    public State(Topology.City currentCity, int currentWeight, Set<Task> pickedUpTasks, Set<Task> availableTasks) {
+    public State(State previousState, ActionDeliberative actionFrom, Topology.City currentCity, int capacity, Set<Task> pickedUpTasks, Set<Task> availableTasks) {
+        this.previousChainLink = new AbstractMap.SimpleEntry<>(previousState, actionFrom);
+        this.chainDepth = previousState == null ? 0 : previousState.getChainDepth() + 1;
+        
         this.currentCity = currentCity;
-        this.currentWeight = currentWeight;
+        this.residualCapacity = capacity;
         this.pickedUpTasks = pickedUpTasks;
         this.availableTasks = availableTasks;
     }
 
-    public Topology.City getCurrentCity() {
-        return currentCity;
+    public boolean isFinalState()
+    {
+        return availableTasks.isEmpty() && pickedUpTasks.isEmpty();
     }
-
-    public int getCurrentWeight() {
-        return currentWeight;
+    
+    public double getChainCost()
+    {
+        State previousState = previousChainLink.getKey();
+        return previousState == null ? 0 : (previousState.getCurrentCity().distanceTo(currentCity) + previousState.getChainCost());
     }
-
-    public Set<Task> getPickedUpTasks() {
-        return pickedUpTasks;
-    }
-
-    public Set<Task> getAvailableTasks() {
-        return availableTasks;
-    }
-
+    
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object o)
+    {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         State state = (State) o;
-        return currentWeight == state.currentWeight &&
-                currentCity.equals(state.currentCity) &&
-                pickedUpTasks.equals(state.pickedUpTasks) &&
-                availableTasks.equals(state.availableTasks);
+        return residualCapacity == state.residualCapacity &&
+            Objects.equals(currentCity, state.currentCity) &&
+            Objects.equals(pickedUpTasks, state.pickedUpTasks) &&
+            Objects.equals(availableTasks, state.availableTasks);
     }
-
+    
     @Override
-    public int hashCode() {
-        return Objects.hash(currentCity, currentWeight, pickedUpTasks, availableTasks);
+    public int hashCode()
+    {
+        return Objects.hash(currentCity, residualCapacity, pickedUpTasks, availableTasks);
     }
 }
