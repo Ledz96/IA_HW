@@ -1,0 +1,30 @@
+In case a state is reached, we don't want to compute child states from it, unless it's optimal.
+
+Since a certain state can only be reached at a certain level of depth, we:
+	- Calculate all states for that level of depth
+	- For each unique state, only keep the one with lowest cost
+	
+From the optimal version of each state, compute child states and repeat, until a final state is found
+
+After a final state is found, guarantee of the optimal state being at that level exists (since no useless actions are taken, it would not be possible to 
+																							be optimal with a higher number of actions than the minimum)
+																							
+At that point, all final states in that level (are they all final? Is this step necessary) are compared, and only the best one will remain
+	
+
+0 -> I
+
+1 -> S, S0, Z, Z0 -> S0, Z0
+
+2 -> E, E0 -> E0
+
+
+while (! optimal...)
+	while (queue.not_empty())
+		set.add(dequeue(state if state !in set or cost(state) < cost(state_in_set)))
+		
+	if (element in set is optimal):
+		optimal_elements = set.find_optimal_elements
+		optimal_elements.stream(...)
+		
+	queue = set.produce_queue_from_optimal_states()
