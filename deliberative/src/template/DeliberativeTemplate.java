@@ -97,7 +97,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	private void fillPlan(Plan plan, State finalState)
 	{
 		State previousState = finalState.getPreviousChainLink().getKey();
-		
 		if (previousState == null)
 			return;
 		
@@ -106,7 +105,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		ActionDeliberative action = finalState.getPreviousChainLink().getValue();
 		action.getPickedUpTasks().forEach(plan::appendPickup);
 		
-		plan.appendMove(action.getDestination());
+		assert finalState.getCurrentCity() == action.getDestination();
+		previousState.getCurrentCity().pathTo(action.getDestination()).forEach(plan::appendMove);
 		
 		Stream.concat(previousState.getPickedUpTasks().stream(), action.getPickedUpTasks().stream())
 			.filter(task -> task.deliveryCity == finalState.getCurrentCity())
@@ -132,6 +132,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			State state = stateQueue.poll();
 			if (state.isFinalState())
 			{
+				// we only keep all finals with minimum depth
 				if (finalStates.isEmpty() || state.getChainDepth() == finalStates.iterator().next().getChainDepth())
 				{
 					finalStates.add(state);
@@ -148,16 +149,24 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 					              .filter(task -> task.pickupCity == state.getCurrentCity())
 					              .collect(Collectors.toSet()))
 				.stream()
-				.filter(taskSet -> ActionDeliberative.checkExecutable(state, taskSet))
+				.filter(taskSet -> ActionDeliberative.checkEnoughCapacity(state, taskSet))
 				.collect(Collectors.toSet());
 			
 			Set<ActionDeliberative> possibleActions = new HashSet<>(
 				pickupSets.stream()
 					.flatMap(taskSet -> topology.cities().stream()
-						.filter(destCity -> // city has tasks or is target of picked up tasks
-							        state.getAvailableTasks().stream().anyMatch(task -> task.pickupCity == destCity)
-									||
-									state.getPickedUpTasks().stream().anyMatch(task -> task.deliveryCity == destCity))
+						.filter(destCity ->
+					        destCity != state.getCurrentCity() &&
+						        (
+							        // dest city has tasks or is target of at least one picked up task
+							        state.getAvailableTasks().stream()
+								        .filter(Predicate.not(taskSet::contains))
+								        .anyMatch(task -> task.pickupCity == destCity)
+							        ||
+							        Stream.concat(state.getPickedUpTasks().stream(), taskSet.stream())
+								        .anyMatch(task -> task.deliveryCity == destCity)
+						        )
+						)
 						.map(destCity -> new ActionDeliberative(destCity, taskSet)))
 					.collect(Collectors.toSet()));
 			
@@ -174,7 +183,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			stateQueue.addAll(newStates);
 		}
 		
-		fillPlan(plan, finalStates.stream().min(Comparator.comparing(State::getChainCost)).stream().findFirst().get());
+		fillPlan(plan, finalStates.stream().min(Comparator.comparing(State::getChainCost)).get());
 		return plan;
 	}
 

@@ -38,7 +38,7 @@ public class ActionDeliberative {
                          state.getAvailableTasks().stream().filter(Predicate.not(pickedUpTasks::contains)).collect(Collectors.toSet()));
     }
     
-    public static boolean checkExecutable(State state, Set<Task> pickupTasks)
+    public static boolean checkEnoughCapacity(State state, Set<Task> pickupTasks)
     {
         return pickupTasks.stream().map(task -> task.weight).reduce(0, Integer::sum) <= state.getResidualCapacity();
     }
