@@ -14,7 +14,7 @@ public class State {
     private final Set<Task> availableTasks;
     
     private final AbstractMap.SimpleEntry<State, ActionDeliberative> previousChainLink;
-    private final int chainDepth;
+    private final int chainDepth; // TODO remove?
     
     public Topology.City getCurrentCity() {
         return currentCity;
