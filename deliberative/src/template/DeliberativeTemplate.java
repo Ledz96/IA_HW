@@ -209,7 +209,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			// TODO EDIT check
 			for (State newState: newStates)
 			{
-				double newStateCost = newState.getChainCost();
+				double newStateCost = newState.getChainCost(vehicle.costPerKm());
 				if (!tempChildrenStates.containsKey(newState)
 					||
 					(tempChildrenStates.containsKey(newState) &&

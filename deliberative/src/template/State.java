@@ -8,13 +8,15 @@ import java.util.Objects;
 import java.util.Set;
 
 public class State {
+    // === hashed ===
     private final Topology.City currentCity;
     private final int residualCapacity;
     private final Set<Task> pickedUpTasks;
     private final Set<Task> availableTasks;
+    // ==============
     
     private final AbstractMap.SimpleEntry<State, ActionDeliberative> previousChainLink;
-    private final int chainDepth; // TODO remove?
+    private final int chainDepth;
     
     public Topology.City getCurrentCity() {
         return currentCity;
@@ -58,10 +60,11 @@ public class State {
         return availableTasks.isEmpty() && pickedUpTasks.isEmpty();
     }
     
-    public double getChainCost()
+    public double getChainCost(int costPerKm)
     {
         State previousState = previousChainLink.getKey();
-        return previousState == null ? 0 : (previousState.getCurrentCity().distanceTo(currentCity) + previousState.getChainCost());
+        return previousState == null ? 0 :
+            (costPerKm * previousState.getCurrentCity().distanceTo(currentCity) + previousState.getChainCost(costPerKm));
     }
     
     @Override
