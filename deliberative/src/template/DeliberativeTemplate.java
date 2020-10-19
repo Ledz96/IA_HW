@@ -62,6 +62,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		{
 			String heuristicName = agent.readProperty("heuristic", String.class, "H2");
 			heuristic = Heuristic.valueOf(heuristicName.toUpperCase());
+			System.out.printf("Heuristic: %s%n", heuristic);
 		}
 	}
 	
@@ -131,15 +132,25 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	
 	Set<Task> previouslyCarriedTasks = new HashSet<>();
 	
-	private final BiFunction<City, TaskSet, State> getInitialState = (currentCity, tasks) ->
+	private State getInitialState(Vehicle vehicle, TaskSet tasks)
 	{
-		return !previouslyCarriedTasks.isEmpty() ?
-			new State(null, null, currentCity, 0,
-			          new HashSet<>(previouslyCarriedTasks),
-			          tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
+		return previouslyCarriedTasks.isEmpty() ?
+			new State(null,
+			          null,
+			          vehicle.costPerKm(),
+			          vehicle.getCurrentCity(),
+			          vehicle.capacity(),
+			          new HashSet<>(),
+			          tasks)
 			:
-			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
-	};
+			new State(null,
+			          null,
+			          vehicle.costPerKm(),
+			          vehicle.getCurrentCity(),
+			          vehicle.capacity() - previouslyCarriedTasks.stream().map(task -> task.weight).reduce(0, Integer::sum),
+			          new HashSet<>(previouslyCarriedTasks),
+			          tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()));
+	}
 	
 	private void checkElapsedTime(long startTime) throws TimeoutException
 	{
@@ -182,7 +193,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		
 		// Generate new states from the possible actions
 		return possibleActions.stream()
-			.map(action -> action.execute(state, vehicle.capacity()))
+			.map(action -> action.execute(state, vehicle))
 			.collect(Collectors.toSet());
 	}
 	
@@ -210,11 +221,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	private Plan BFSPlan(Vehicle vehicle, TaskSet tasks) throws TimeoutException
 	{
 		long startTime = System.currentTimeMillis();
+		int iterations = 0;
 		
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
-		State initialState = getInitialState.apply(currentCity, tasks);
+		State initialState = getInitialState(vehicle, tasks);
 		
 		Queue<State> stateQueue = new LinkedList<>();
 		stateQueue.add(initialState);
@@ -247,6 +259,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				continue;
 			}
 			
+			iterations++;
 			State state = stateQueue.poll();
 			if (state.isFinalState())
 			{
@@ -266,7 +279,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			// this same level
 			for (State newState: newStates)
 			{
-				double newStateCost = newState.getChainCost(vehicle.costPerKm());
+				double newStateCost = newState.getChainCost();
 				if (!tempChildrenStates.containsKey(newState) ||
 					(tempChildrenStates.containsKey(newState) &&
 						newStateCost < tempChildrenStates.get(newState)))
@@ -276,24 +289,28 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			}
 		}
 		
-		fillPlan(plan,
-		         finalStates.stream()
-			         .min(Comparator.comparing(state -> state.getChainCost(vehicle.costPerKm()))).get());
+		System.out.printf("[BFS] iterations: %d%n", iterations);
+		
+		State bestState = finalStates.stream().min(Comparator.comparing(State::getChainCost)).get();
+		System.out.printf("[BFS] min cost: %f%n", bestState.getChainCost());
+		
+		fillPlan(plan, bestState);
 		return plan;
 	}
 	
 	private Plan ASTARPlan(Vehicle vehicle, TaskSet tasks) throws TimeoutException
 	{
 		long startTime = System.currentTimeMillis();
+		int iterations = 0;
 		
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
-		State initialState = getInitialState.apply(currentCity, tasks);
+		State initialState = getInitialState(vehicle, tasks);
 		BiFunction<State, Integer, Double> heuristicFunction = heuristicFunctionMap.get(heuristic);
 		
 		Comparator<State> comparator = Comparator.comparingDouble(state ->
-			state.getChainCost(vehicle.costPerKm()) + heuristicFunction.apply(state, vehicle.costPerKm()));
+			state.getChainCost() + heuristicFunction.apply(state, vehicle.costPerKm()));
 		PriorityQueue<State> Q = new PriorityQueue<>(comparator);
 		Q.add(initialState);
 		
@@ -302,9 +319,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		while (!Q.isEmpty())
 		{
 			checkElapsedTime(startTime);
+			iterations++;
 			
 			State n = Q.poll();
-			double nCost = n.getChainCost(vehicle.costPerKm());
+			double nCost = n.getChainCost();
 			
 			if (!C.containsKey(n) || (C.containsKey(n) && nCost < C.get(n)))
 			{
@@ -316,6 +334,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				{
 					if (derivedState.isFinalState())
 					{
+						System.out.printf("[ASTAR] iterations: %d%n", iterations);
+						System.out.printf("[ASTAR] min cost: %f%n", derivedState.getChainCost());
+						
 						fillPlan(plan, derivedState);
 						return plan;
 					}

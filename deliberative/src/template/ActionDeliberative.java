@@ -1,5 +1,6 @@
 package template;
 
+import logist.simulation.Vehicle;
 import logist.task.Task;
 import logist.topology.Topology;
 
@@ -25,15 +26,17 @@ public class ActionDeliberative {
         return pickedUpTasks;
     }
     
-    public State execute(State state, int vehicleCapacity)
+    public State execute(State state, Vehicle vehicle)
     {
         Set<Task> newPickedUpTasks = Stream.concat(state.getPickedUpTasks().stream(), pickedUpTasks.stream())
                 .filter(task -> task.deliveryCity != destination)
                 .collect(Collectors.toSet());
         
-        return new State(state, this,
+        return new State(state,
+                         this,
+                         vehicle.costPerKm(),
                          destination,
-                         vehicleCapacity - newPickedUpTasks.stream().map(task -> task.weight).reduce(0, Integer::sum),
+                         vehicle.capacity() - newPickedUpTasks.stream().map(task -> task.weight).reduce(0, Integer::sum),
                          newPickedUpTasks,
                          state.getAvailableTasks().stream().filter(Predicate.not(pickedUpTasks::contains)).collect(Collectors.toSet()));
     }

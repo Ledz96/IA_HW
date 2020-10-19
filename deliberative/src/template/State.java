@@ -17,6 +17,7 @@ public class State {
     
     private final AbstractMap.SimpleEntry<State, ActionDeliberative> previousChainLink;
     private final int chainDepth;
+    private final double chainCost;
     
     public Topology.City getCurrentCity() {
         return currentCity;
@@ -44,10 +45,17 @@ public class State {
     {
         return chainDepth;
     }
+    
+    public double getChainCost()
+    {
+        return chainCost;
+    }
 
-    public State(State previousState, ActionDeliberative actionFrom, Topology.City currentCity, int capacity, Set<Task> pickedUpTasks, Set<Task> availableTasks) {
+    public State(State previousState, ActionDeliberative actionFrom, int costPerKm, Topology.City currentCity, int capacity, Set<Task> pickedUpTasks, Set<Task> availableTasks) {
         this.previousChainLink = new AbstractMap.SimpleEntry<>(previousState, actionFrom);
         this.chainDepth = previousState == null ? 0 : previousState.getChainDepth() + 1;
+        this.chainCost = previousState == null ? 0 :
+            previousState.getChainCost() + costPerKm * previousState.getCurrentCity().distanceTo(currentCity);
         
         this.currentCity = currentCity;
         this.residualCapacity = capacity;
