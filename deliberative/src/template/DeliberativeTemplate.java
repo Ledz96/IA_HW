@@ -13,7 +13,6 @@ import logist.topology.Topology.City;
 
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,7 +25,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 {
 	enum Algorithm { naive, BFS, ASTAR }
 	enum Heuristic { H1, H2, H3, H4 }
-	private final Map<Heuristic, BiFunction<State, Integer, Double>> heuristicMap = new HashMap<>();
+	private final Map<Heuristic, BiFunction<State, Integer, Double>> heuristicFunctionMap = new HashMap<>();
 	
 	/* Environment */
 	Topology topology;
@@ -54,14 +53,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 		
-		heuristicMap.put(Heuristic.H1, Heuristics::H1c);
-		heuristicMap.put(Heuristic.H2, Heuristics::H2);
-		heuristicMap.put(Heuristic.H3, Heuristics::H3);
-		heuristicMap.put(Heuristic.H4, Heuristics::H4);
+		heuristicFunctionMap.put(Heuristic.H1, Heuristics::H1c);
+		heuristicFunctionMap.put(Heuristic.H2, Heuristics::H2);
+		heuristicFunctionMap.put(Heuristic.H3, Heuristics::H3);
+		heuristicFunctionMap.put(Heuristic.H4, Heuristics::H4);
 		
 		if (algorithm == Algorithm.ASTAR)
 		{
-			String heuristicName = agent.readProperty("heuristic", String.class, "H1");
+			String heuristicName = agent.readProperty("heuristic", String.class, "H2");
 			heuristic = Heuristic.valueOf(heuristicName.toUpperCase());
 		}
 	}
@@ -80,20 +79,16 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				plan = naivePlan(vehicle, tasks);
 				break;
 			case BFS:
-				try
-				{
+				try {
 					plan = BFSPlan(vehicle, tasks);
-				} catch (TimeoutException e)
-				{
+				} catch (TimeoutException e) {
 					e.printStackTrace();
 				}
 				break;
 			case ASTAR:
-				try
-				{
+				try {
 					plan = ASTARPlan(vehicle, tasks);
-				} catch (TimeoutException e)
-				{
+				} catch (TimeoutException e) {
 					e.printStackTrace();
 				}
 				break;
@@ -136,10 +131,26 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	
 	Set<Task> previouslyCarriedTasks = new HashSet<>();
 	
+	private final BiFunction<City, TaskSet, State> getInitialState = (currentCity, tasks) ->
+	{
+		return !previouslyCarriedTasks.isEmpty() ?
+			new State(null, null, currentCity, 0,
+			          new HashSet<>(previouslyCarriedTasks),
+			          tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
+			:
+			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
+	};
+	
+	private void checkElapsedTime(long startTime) throws TimeoutException
+	{
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		if (elapsedTime > 60 * 1000)
+			throw new TimeoutException("Exceeded 60 seconds");
+	}
+	
 	private Set<State> computeDerivedStates(State state, Vehicle vehicle)
 	{
-		// Generate possible actions
-		
+		// Generate al possible subsets of available tasks from the current city which we have enough capacity for
 		Set<Set<Task>> pickupSets = Helper
 			.combinations(state.getAvailableTasks()
 				              .stream()
@@ -149,6 +160,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			.filter(taskSet -> ActionDeliberative.checkEnoughCapacity(state, taskSet))
 			.collect(Collectors.toSet());
 		
+		// Generate all possible actions (for each set of task picked up and destination city)
+		// Only useful actions are considered (no useless movements to cities without actions to be picked up or that
+		// are not target of any picked up task)
 		Set<ActionDeliberative> possibleActions = pickupSets.stream()
 			.flatMap(taskSet -> topology.cities().stream()
 				.filter(destCity ->
@@ -166,7 +180,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				.map(destCity -> new ActionDeliberative(destCity, taskSet)))
 			.collect(Collectors.toSet());
 		
-		// Generate new states
+		// Generate new states from the possible actions
 		return possibleActions.stream()
 			.map(action -> action.execute(state, vehicle.capacity()))
 			.collect(Collectors.toSet());
@@ -174,6 +188,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	
 	private void fillPlan(Plan plan, State finalState)
 	{
+		// Recursively climb up the chain of states and explore the chain back down while filling out the plan
+		
 		State previousState = finalState.getPreviousChainLink().getKey();
 		if (previousState == null)
 			return;
@@ -198,12 +214,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
-		State initialState = !previouslyCarriedTasks.isEmpty() ?
-			new State(null, null, currentCity, 0,
-			          new HashSet<>(previouslyCarriedTasks),
-		              tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
-			:
-			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
+		State initialState = getInitialState.apply(currentCity, tasks);
 		
 		Queue<State> stateQueue = new LinkedList<>();
 		stateQueue.add(initialState);
@@ -217,20 +228,22 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		boolean foundFinal = false;
 		Set<State> finalStates = new HashSet<>();
 		
+		// Stop when the queue is empty AND we have found a final state
+		// (otherwise fill the queue with the temp children states)
 		while (!(stateQueue.isEmpty() && foundFinal))
 		{
-			long elapsedTime = System.currentTimeMillis() - startTime;
-			if (elapsedTime > 60 * 1000)
-				throw new TimeoutException("Exceeded 60 seconds");
+			checkElapsedTime(startTime);
 			
 			if (stateQueue.isEmpty())
 			{
+				// State queue is empty but we did not found a final, thus move the temp children states to the queue
 				stateQueue.addAll(tempChildrenStates.keySet());
-				tempChildrenStates = new HashMap<>();
 				
 				// Mark new states as visited and add them to the queue
 				visitedStates.addAll(tempChildrenStates.keySet());
 				
+				// Go straight to the iterating on the states of the next level
+				tempChildrenStates = new HashMap<>();
 				continue;
 			}
 			
@@ -249,12 +262,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				.filter(Predicate.not(visitedStates::contains))
 				.collect(Collectors.toSet());
 			
-			// don't immediately add children states to the queue, as we may found a better parent on the same level
+			// Don't immediately add children states to the queue, as we may found a better parent for the same child on
+			// this same level
 			for (State newState: newStates)
 			{
 				double newStateCost = newState.getChainCost(vehicle.costPerKm());
-				if (!tempChildrenStates.containsKey(newState)
-					||
+				if (!tempChildrenStates.containsKey(newState) ||
 					(tempChildrenStates.containsKey(newState) &&
 						newStateCost < tempChildrenStates.get(newState)))
 				{
@@ -276,15 +289,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
-		State initialState = !previouslyCarriedTasks.isEmpty() ?
-			new State(null, null, currentCity, 0,
-			          new HashSet<>(previouslyCarriedTasks),
-			          tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
-			:
-			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
-		previouslyCarriedTasks = new HashSet<>();
-		
-		BiFunction<State, Integer, Double> heuristicFunction = heuristicMap.get(heuristic);
+		State initialState = getInitialState.apply(currentCity, tasks);
+		BiFunction<State, Integer, Double> heuristicFunction = heuristicFunctionMap.get(heuristic);
 		
 		Comparator<State> comparator = Comparator.comparingDouble(state ->
 			state.getChainCost(vehicle.costPerKm()) + heuristicFunction.apply(state, vehicle.costPerKm()));
@@ -295,17 +301,12 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		
 		while (!Q.isEmpty())
 		{
-			long elapsedTime = System.currentTimeMillis() - startTime;
-			if (elapsedTime > 60 * 1000)
-				throw new TimeoutException("Exceeded 60 seconds");
+			checkElapsedTime(startTime);
 			
 			State n = Q.poll();
 			double nCost = n.getChainCost(vehicle.costPerKm());
 			
-			if (!C.containsKey(n)
-				||
-				(C.containsKey(n) &&
-					nCost < C.get(n)))
+			if (!C.containsKey(n) || (C.containsKey(n) && nCost < C.get(n)))
 			{
 				C.put(n, nCost);
 				

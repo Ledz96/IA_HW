@@ -22,6 +22,17 @@ public class Heuristics
 		return costPerKm * Double.max(maxDistAnyTask, maxLengthAvailable);
 	}
 	
+	public static double H2(State state, int costPerKm)
+	{
+		Set<Topology.City> destCitiesSet = Stream.concat(state.getPickedUpTasks().stream(), state.getAvailableTasks().stream())
+			.map(task -> task.deliveryCity)
+			.collect(Collectors.toSet());
+		
+		return costPerKm * (destCitiesSet.stream()
+			.map(city -> city.neighbors().stream().map(city::distanceTo).min(Double::compareTo).get())
+			.reduce(0., Double::sum));
+	}
+	
 	public static double H3(State state, int costPerKm)
 	{
 		Set<Topology.City> destCitiesSet = Stream.concat(state.getPickedUpTasks().stream(), state.getAvailableTasks().stream())
@@ -34,32 +45,8 @@ public class Heuristics
 				.max(Double::compareTo).get());
 	}
 	
-	private static int H1Best = 0;
-	private static int H3Best = 0;
-	
 	public static double H4(State state, int costPerKm)
 	{
-		double H1cRes = H1c(state, costPerKm);
-		double H3Res = H3(state, costPerKm);
-		
-		if (H1cRes > H3Res)
-			H1Best++;
-		else
-			H3Best++;
-		
-		System.out.printf("H1Best: %s%nH3Best: %s%n", H1Best, H3Best);
-		
-		return Double.max(H1cRes, H3Res);
-	}
-	
-	public static double H2(State state, int costPerKm)
-	{
-		Set<Topology.City> destCitiesSet = Stream.concat(state.getPickedUpTasks().stream(), state.getAvailableTasks().stream())
-			.map(task -> task.deliveryCity)
-			.collect(Collectors.toSet());
-		
-		return costPerKm * (destCitiesSet.stream()
-			.map(city -> city.neighbors().stream().map(city::distanceTo).min(Double::compareTo).get())
-			.reduce(0., Double::sum));
+		return Double.max(H1c(state, costPerKm), H3(state, costPerKm));
 	}
 }
