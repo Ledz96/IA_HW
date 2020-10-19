@@ -12,7 +12,9 @@ import logist.topology.Topology;
 import logist.topology.Topology.City;
 
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -23,6 +25,8 @@ import java.util.stream.Stream;
 public class DeliberativeTemplate implements DeliberativeBehavior
 {
 	enum Algorithm { naive, BFS, ASTAR }
+	enum Heuristic { H1, H2, H3, H4 }
+	private final Map<Heuristic, BiFunction<State, Integer, Double>> heuristicMap = new HashMap<>();
 	
 	/* Environment */
 	Topology topology;
@@ -34,6 +38,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 
 	/* the planning class */
 	Algorithm algorithm;
+	Heuristic heuristic;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
@@ -49,14 +54,25 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 		
-		// ...
+		heuristicMap.put(Heuristic.H1, Heuristics::H1c);
+		heuristicMap.put(Heuristic.H2, Heuristics::H2);
+		heuristicMap.put(Heuristic.H3, Heuristics::H3);
+		heuristicMap.put(Heuristic.H4, Heuristics::H4);
+		
+		if (algorithm == Algorithm.ASTAR)
+		{
+			String heuristicName = agent.readProperty("heuristic", String.class, "H1");
+			heuristic = Heuristic.valueOf(heuristicName.toUpperCase());
+		}
 	}
 	
 	@Override
 	public Plan plan(Vehicle vehicle, TaskSet tasks)
 	{
-		Plan plan;
-
+		Plan plan = null;
+		
+		long startTime = System.currentTimeMillis();
+		
 		// Compute the plan with the selected algorithm.
 		switch (algorithm)
 		{
@@ -64,14 +80,33 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				plan = naivePlan(vehicle, tasks);
 				break;
 			case BFS:
-				plan = BFSPlan(vehicle, tasks);
+				try
+				{
+					plan = BFSPlan(vehicle, tasks);
+				} catch (TimeoutException e)
+				{
+					e.printStackTrace();
+				}
 				break;
 			case ASTAR:
-				plan = ASTARPlan(vehicle, tasks);
+				try
+				{
+					plan = ASTARPlan(vehicle, tasks);
+				} catch (TimeoutException e)
+				{
+					e.printStackTrace();
+				}
 				break;
 			default:
 				throw new AssertionError("Should not happen.");
-		}		
+		}
+		
+		if (plan == null)
+			System.exit(0);
+		
+		long elapsedTime = System.currentTimeMillis() - startTime;
+		System.out.printf("[%s] planning time: %dms%n", algorithm, elapsedTime);
+		
 		return plan;
 	}
 	
@@ -101,6 +136,42 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	
 	Set<Task> previouslyCarriedTasks = new HashSet<>();
 	
+	private Set<State> computeDerivedStates(State state, Vehicle vehicle)
+	{
+		// Generate possible actions
+		
+		Set<Set<Task>> pickupSets = Helper
+			.combinations(state.getAvailableTasks()
+				              .stream()
+				              .filter(task -> task.pickupCity == state.getCurrentCity())
+				              .collect(Collectors.toSet()))
+			.stream()
+			.filter(taskSet -> ActionDeliberative.checkEnoughCapacity(state, taskSet))
+			.collect(Collectors.toSet());
+		
+		Set<ActionDeliberative> possibleActions = pickupSets.stream()
+			.flatMap(taskSet -> topology.cities().stream()
+				.filter(destCity ->
+					        destCity != state.getCurrentCity() &&
+						        (
+							        // dest city has tasks or is target of at least one picked up task
+							        state.getAvailableTasks().stream()
+								        .filter(Predicate.not(taskSet::contains))
+								        .anyMatch(task -> task.pickupCity == destCity)
+								        ||
+								        Stream.concat(state.getPickedUpTasks().stream(), taskSet.stream())
+									        .anyMatch(task -> task.deliveryCity == destCity)
+						        )
+				)
+				.map(destCity -> new ActionDeliberative(destCity, taskSet)))
+			.collect(Collectors.toSet());
+		
+		// Generate new states
+		return possibleActions.stream()
+			.map(action -> action.execute(state, vehicle.capacity()))
+			.collect(Collectors.toSet());
+	}
+	
 	private void fillPlan(Plan plan, State finalState)
 	{
 		State previousState = finalState.getPreviousChainLink().getKey();
@@ -120,8 +191,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			.forEach(plan::appendDelivery);
 	}
 
-	private Plan BFSPlan(Vehicle vehicle, TaskSet tasks)
+	private Plan BFSPlan(Vehicle vehicle, TaskSet tasks) throws TimeoutException
 	{
+		long startTime = System.currentTimeMillis();
+		
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
@@ -146,7 +219,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		
 		while (!(stateQueue.isEmpty() && foundFinal))
 		{
-			// TODO EDIT check
+			long elapsedTime = System.currentTimeMillis() - startTime;
+			if (elapsedTime > 60 * 1000)
+				throw new TimeoutException("Exceeded 60 seconds");
+			
 			if (stateQueue.isEmpty())
 			{
 				stateQueue.addAll(tempChildrenStates.keySet());
@@ -168,38 +244,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				continue;
 			}
 			
-			// Generate possible actions
-			
-			Set<Set<Task>> pickupSets = Helper
-				.combinations(state.getAvailableTasks()
-					              .stream()
-					              .filter(task -> task.pickupCity == state.getCurrentCity())
-					              .collect(Collectors.toSet()))
-				.stream()
-				.filter(taskSet -> ActionDeliberative.checkEnoughCapacity(state, taskSet))
-				.collect(Collectors.toSet());
-			
-			Set<ActionDeliberative> possibleActions = new HashSet<>(
-				pickupSets.stream()
-					.flatMap(taskSet -> topology.cities().stream()
-						.filter(destCity ->
-					        destCity != state.getCurrentCity() &&
-						        (
-							        // dest city has tasks or is target of at least one picked up task
-							        state.getAvailableTasks().stream()
-								        .filter(Predicate.not(taskSet::contains))
-								        .anyMatch(task -> task.pickupCity == destCity)
-							        ||
-							        Stream.concat(state.getPickedUpTasks().stream(), taskSet.stream())
-								        .anyMatch(task -> task.deliveryCity == destCity)
-						        )
-						)
-						.map(destCity -> new ActionDeliberative(destCity, taskSet)))
-					.collect(Collectors.toSet()));
-			
 			// Generate new states
-			Set<State> newStates = possibleActions.stream()
-				.map(action -> action.execute(state, vehicle.capacity()))
+			Set<State> newStates = computeDerivedStates(state, vehicle).stream()
 				.filter(Predicate.not(visitedStates::contains))
 				.collect(Collectors.toSet());
 			
@@ -223,14 +269,62 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		return plan;
 	}
 	
-	private Plan ASTARPlan(Vehicle vehicle, TaskSet tasks)
+	private Plan ASTARPlan(Vehicle vehicle, TaskSet tasks) throws TimeoutException
 	{
+		long startTime = System.currentTimeMillis();
+		
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
 		
-		// TODO ...
+		State initialState = !previouslyCarriedTasks.isEmpty() ?
+			new State(null, null, currentCity, 0,
+			          new HashSet<>(previouslyCarriedTasks),
+			          tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
+			:
+			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
+		previouslyCarriedTasks = new HashSet<>();
 		
-		return plan;
+		BiFunction<State, Integer, Double> heuristicFunction = heuristicMap.get(heuristic);
+		
+		Comparator<State> comparator = Comparator.comparingDouble(state ->
+			state.getChainCost(vehicle.costPerKm()) + heuristicFunction.apply(state, vehicle.costPerKm()));
+		PriorityQueue<State> Q = new PriorityQueue<>(comparator);
+		Q.add(initialState);
+		
+		Map<State, Double> C = new HashMap<>();
+		
+		while (!Q.isEmpty())
+		{
+			long elapsedTime = System.currentTimeMillis() - startTime;
+			if (elapsedTime > 60 * 1000)
+				throw new TimeoutException("Exceeded 60 seconds");
+			
+			State n = Q.poll();
+			double nCost = n.getChainCost(vehicle.costPerKm());
+			
+			if (!C.containsKey(n)
+				||
+				(C.containsKey(n) &&
+					nCost < C.get(n)))
+			{
+				C.put(n, nCost);
+				
+				Set<State> derivedStates = computeDerivedStates(n, vehicle);
+				
+				for (State derivedState: derivedStates)
+				{
+					if (derivedState.isFinalState())
+					{
+						fillPlan(plan, derivedState);
+						return plan;
+					}
+				}
+				
+				Q.addAll(derivedStates);
+			}
+		}
+		
+		throw new AssertionError("should not reach here");
 	}
 	
 	@Override

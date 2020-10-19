@@ -86,4 +86,17 @@ public class State {
     {
         return Objects.hash(currentCity, residualCapacity, pickedUpTasks, availableTasks);
     }
+    
+    @Override
+    public String toString()
+    {
+        return "State{" +
+            "currentCity=" + currentCity +
+            ", residualCapacity=" + residualCapacity +
+            ", pickedUpTasks=" + pickedUpTasks +
+            ", availableTasks=" + availableTasks +
+            ", previousChainLink=" + previousChainLink +
+            ", chainDepth=" + chainDepth +
+            '}';
+    }
 }

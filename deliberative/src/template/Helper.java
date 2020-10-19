@@ -1,5 +1,6 @@
 package template;
 
+import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,5 +22,15 @@ public class Helper
 		}
 		
 		return ret;
+	}
+	
+	public static <T> Set<Pair<T>> pairs(Set<T> set)
+	{
+		return set.stream()
+			.flatMap(left ->
+				         set.stream()
+					         .filter(right -> right != left)
+					         .map(right -> new Pair<>(left, right)))
+			.collect(Collectors.toSet());
 	}
 }
