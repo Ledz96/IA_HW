@@ -131,7 +131,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		              tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
 			:
 			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
-		previouslyCarriedTasks = new HashSet<>();
 		
 		Queue<State> stateQueue = new LinkedList<>();
 		stateQueue.add(initialState);
@@ -145,7 +144,6 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		boolean foundFinal = false;
 		Set<State> finalStates = new HashSet<>();
 		
-		// TODO EDIT check
 		while (!(stateQueue.isEmpty() && foundFinal))
 		{
 			// TODO EDIT check
@@ -153,22 +151,21 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			{
 				stateQueue.addAll(tempChildrenStates.keySet());
 				tempChildrenStates = new HashMap<>();
+				
+				// Mark new states as visited and add them to the queue
+				visitedStates.addAll(tempChildrenStates.keySet());
+				
 				continue;
 			}
 			
 			State state = stateQueue.poll();
 			if (state.isFinalState())
 			{
-				// TODO EDIT check
 				foundFinal = true;
 				
 				// we only keep all finals with minimum depth
-				if (finalStates.isEmpty() || state.getChainDepth() == finalStates.iterator().next().getChainDepth())
-				{
-					finalStates.add(state);
-					continue;
-				}
-				else break; // TODO never triggers after new changes?
+				finalStates.add(state);
+				continue;
 			}
 			
 			// Generate possible actions
@@ -206,12 +203,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				.filter(Predicate.not(visitedStates::contains))
 				.collect(Collectors.toSet());
 			
-			// Mark new states as visited and add them to the queue
-			
-			visitedStates.addAll(newStates);
-			
 			// don't immediately add children states to the queue, as we may found a better parent on the same level
-			// TODO EDIT check
 			for (State newState: newStates)
 			{
 				double newStateCost = newState.getChainCost(vehicle.costPerKm());
