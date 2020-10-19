@@ -94,6 +94,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 		return plan;
 	}
 	
+	Set<Task> previouslyCarriedTasks = new HashSet<>();
+	
 	private void fillPlan(Plan plan, State finalState)
 	{
 		State previousState = finalState.getPreviousChainLink().getKey();
@@ -117,8 +119,15 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	{
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
-
-		State initialState = new State(null, null, currentCity, 0, new HashSet<>(), tasks);
+		
+		State initialState = !previouslyCarriedTasks.isEmpty() ?
+			new State(null, null, currentCity, 0,
+			          new HashSet<>(previouslyCarriedTasks),
+		              tasks.stream().filter(Predicate.not(previouslyCarriedTasks::contains)).collect(Collectors.toSet()))
+			:
+			new State(null, null, currentCity, 0, new HashSet<>(), tasks);
+		previouslyCarriedTasks = new HashSet<>();
+		
 		Queue<State> stateQueue = new LinkedList<>();
 		stateQueue.add(initialState);
 		
@@ -211,18 +220,22 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			}
 		}
 		
-		fillPlan(plan, finalStates.stream().min(Comparator.comparing(State::getChainCost)).get());
+		fillPlan(plan,
+		         finalStates.stream()
+			         .min(Comparator.comparing(state -> state.getChainCost(vehicle.costPerKm()))).get());
 		return plan;
 	}
 
 	@Override
 	public void planCancelled(TaskSet carriedTasks)
 	{
-		// TODO
-		if (!carriedTasks.isEmpty()) {
+		if (!carriedTasks.isEmpty())
+		{
 			// This cannot happen for this simple agent, but typically
 			// you will need to consider the carriedTasks when the next
 			// plan is computed.
+			
+			previouslyCarriedTasks = carriedTasks;
 		}
 	}
 }
