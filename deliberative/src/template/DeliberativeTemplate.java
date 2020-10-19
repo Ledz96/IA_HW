@@ -20,9 +20,9 @@ import java.util.stream.Stream;
  * An optimal planner for one vehicle.
  */
 @SuppressWarnings("unused")
-public class DeliberativeTemplate implements DeliberativeBehavior {
-
-	enum Algorithm { BFS, ASTAR }
+public class DeliberativeTemplate implements DeliberativeBehavior
+{
+	enum Algorithm { naive, BFS, ASTAR }
 	
 	/* Environment */
 	Topology topology;
@@ -36,7 +36,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	Algorithm algorithm;
 	
 	@Override
-	public void setup(Topology topology, TaskDistribution td, Agent agent) {
+	public void setup(Topology topology, TaskDistribution td, Agent agent)
+	{
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
@@ -52,26 +53,30 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 	}
 	
 	@Override
-	public Plan plan(Vehicle vehicle, TaskSet tasks) {
+	public Plan plan(Vehicle vehicle, TaskSet tasks)
+	{
 		Plan plan;
 
 		// Compute the plan with the selected algorithm.
-		switch (algorithm) {
-		case ASTAR:
-			// ...
-			plan = naivePlan(vehicle, tasks);
-			break;
-		case BFS:
-			// ...
-			plan = BFS(vehicle, tasks);
-			break;
-		default:
-			throw new AssertionError("Should not happen.");
+		switch (algorithm)
+		{
+			case naive:
+				plan = naivePlan(vehicle, tasks);
+				break;
+			case BFS:
+				plan = BFSPlan(vehicle, tasks);
+				break;
+			case ASTAR:
+				plan = ASTARPlan(vehicle, tasks);
+				break;
+			default:
+				throw new AssertionError("Should not happen.");
 		}		
 		return plan;
 	}
 	
-	private Plan naivePlan(Vehicle vehicle, TaskSet tasks) {
+	private Plan naivePlan(Vehicle vehicle, TaskSet tasks)
+	{
 		City current = vehicle.getCurrentCity();
 		Plan plan = new Plan(current);
 
@@ -115,7 +120,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			.forEach(plan::appendDelivery);
 	}
 
-	private Plan BFS(Vehicle vehicle, TaskSet tasks)
+	private Plan BFSPlan(Vehicle vehicle, TaskSet tasks)
 	{
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
@@ -225,7 +230,17 @@ public class DeliberativeTemplate implements DeliberativeBehavior {
 			         .min(Comparator.comparing(state -> state.getChainCost(vehicle.costPerKm()))).get());
 		return plan;
 	}
-
+	
+	private Plan ASTARPlan(Vehicle vehicle, TaskSet tasks)
+	{
+		City currentCity = vehicle.getCurrentCity();
+		Plan plan = new Plan(currentCity);
+		
+		// TODO ...
+		
+		return plan;
+	}
+	
 	@Override
 	public void planCancelled(TaskSet carriedTasks)
 	{
