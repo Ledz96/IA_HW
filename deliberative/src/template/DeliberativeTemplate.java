@@ -327,7 +327,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	}
 	
 	@Override
-	public void planCancelled(TaskSet carriedTasks)
+		public void planCancelled(TaskSet carriedTasks)
 	{
 		if (!carriedTasks.isEmpty())
 		{
