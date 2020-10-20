@@ -68,13 +68,6 @@ public class State {
         return availableTasks.isEmpty() && pickedUpTasks.isEmpty();
     }
     
-    public double getChainCost(int costPerKm)
-    {
-        State previousState = previousChainLink.getKey();
-        return previousState == null ? 0 :
-            (costPerKm * previousState.getCurrentCity().distanceTo(currentCity) + previousState.getChainCost(costPerKm));
-    }
-    
     @Override
     public boolean equals(Object o)
     {
@@ -88,7 +81,7 @@ public class State {
             Objects.equals(pickedUpTasks, state.pickedUpTasks) &&
             Objects.equals(availableTasks, state.availableTasks);
     }
-    
+
     @Override
     public int hashCode()
     {

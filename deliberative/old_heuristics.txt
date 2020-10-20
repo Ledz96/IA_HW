@@ -1,0 +1,17 @@
+H1) distance of the farthest destination_city for the picked up tasks
+		(+ distance to s2's destination_city from s1's destination_city for tasks starting from s1's destination_city?) NO: doesn't respect distance property
+	H1b) distance of the farthest destination_city for all_tasks
+	H1c) max(max distance from current_city to dest_city of any task, max length among available tasks)
+	H1d) max(max(dist(current_city, source_city) + dist(source_city, destination_city) for available tasks),
+         	        max(dist(current_city, destination_city) for picked up tasks))
+	H2) max(distance(task1.destination_city, task2.destination_city) for task1, task2 in all_tasks) if at least 2 destination_city
+	    else H1(state)
+	H3) sum(min distance(city, destination_city) for city in topology, destination_city in set(city: all_tasks.destination_city))
+		(perfect for best case, may be not very useful for other cases)
+	H4) max(H1c, H3)
+
+	H6?)
+	    set of explored cities = initial city
+	    shortest path from any explored city to any destination of a task
+	    insert the destination of that task to the explored cities
+	    iterate

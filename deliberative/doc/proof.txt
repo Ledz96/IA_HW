@@ -1,0 +1,44 @@
+H1
+
+- proof of monotonicity/consistency:
+
+we want h(x) <= d(x,y) + h(y)
+Our worst case is the movement of length d which minimizes h(y). The distance towards the farthest destination city after our
+movement (not necessarily the same as in the previous state) will at most decrease by d. In such a case, h(z) = d + h(x).
+Otherwise, the movement will either decrease the max distance by a value < d, keep it the same or increase it, thus h(z) < d + h(x)
+
+
+- underestimate of real cost:
+
+In the worst case scenario, all the movements the agent has to take in order to complete all its tasks are lined up and face
+the same direction. In this case, travelling the distance between the first and last cities allow it to complete all tasks in
+one pass. However, the heuristic on the first state is not overestimated, being its estimated cost equal to the one needed
+for the movement.
+In all other scenarios, the real cost would be greater than the heuristic, as additional movements to the maximum-distance one
+would be needed.
+
+
+H2
+
+- inductive proof of monotonicity/consistency:
+
+base case: next movement is final movement
+h(y) = 0 -> h(x) = d(x,y) -> h(x) <= d(x,y) + h(y)
+
+inductive case:
+we have the path z -> x -> y
+and h(x) <= d(x,y) + h(y)
+we want h(z) <= d(z,x) + h(x)
+
+Our worst case is the movement of length d which minimizes h(x). The distance towards the farthest task after our movement (not
+necessarily the same as in the previous state) will at most decrease by d. In such a case, h(z) = d + h(x).
+Otherwise, the movement will either decrease the max distance by a value < d, keep it the same or increase it, thus h(z) < d + h(x)
+
+- underestimate of real cost:
+
+In the worst case scenario, all the movements the agent has to take in order to complete all its tasks are lined up and face
+the same direction. In this case, travelling the distance between the first and last cities allow it to complete all tasks in
+one pass. However, the heuristic on the first state is not overestimated, being its estimated cost equal to the one needed
+for the movement.
+In all other scenarios, the real cost would be greater than the heuristic, as additional movements to the maximum-distance one
+would be needed.

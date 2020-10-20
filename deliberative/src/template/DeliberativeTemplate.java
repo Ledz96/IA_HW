@@ -13,6 +13,7 @@ import logist.topology.Topology.City;
 
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,7 +25,7 @@ import java.util.stream.Stream;
 public class DeliberativeTemplate implements DeliberativeBehavior
 {
 	enum Algorithm { naive, BFS, ASTAR }
-	enum Heuristic { H1, H2, H3, H4 }
+	enum Heuristic { H1, H2 }
 	private final Map<Heuristic, BiFunction<State, Integer, Double>> heuristicFunctionMap = new HashMap<>();
 	
 	/* Environment */
@@ -39,9 +40,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	Algorithm algorithm;
 	Heuristic heuristic;
 	
+	private static AtomicInteger sharedId = new AtomicInteger(0);
+	private int id;
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
+		id = sharedId.incrementAndGet();
+		
 		this.topology = topology;
 		this.td = td;
 		this.agent = agent;
@@ -53,10 +59,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		// Throws IllegalArgumentException if algorithm is unknown
 		algorithm = Algorithm.valueOf(algorithmName.toUpperCase());
 		
-		heuristicFunctionMap.put(Heuristic.H1, Heuristics::H1c);
+		heuristicFunctionMap.put(Heuristic.H1, Heuristics::H1);
 		heuristicFunctionMap.put(Heuristic.H2, Heuristics::H2);
-		heuristicFunctionMap.put(Heuristic.H3, Heuristics::H3);
-		heuristicFunctionMap.put(Heuristic.H4, Heuristics::H4);
 		
 		if (algorithm == Algorithm.ASTAR)
 		{
@@ -210,6 +214,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		ActionDeliberative action = finalState.getPreviousChainLink().getValue();
 		action.getPickedUpTasks().forEach(plan::appendPickup);
 		
+		System.out.printf("[%s] State: %s%n", id, previousState);
+		System.out.printf("[%s] Action: %s%n", id, action);
+		action.getPickedUpTasks().forEach(pickedUpTask -> System.out.printf("[%s] pickup: %s%n", id, pickedUpTask));
+		
 		assert finalState.getCurrentCity() == action.getDestination();
 		previousState.getCurrentCity().pathTo(action.getDestination()).forEach(plan::appendMove);
 		
@@ -217,84 +225,53 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			.filter(task -> task.deliveryCity == finalState.getCurrentCity())
 			.forEach(plan::appendDelivery);
 	}
-
+	
 	private Plan BFSPlan(Vehicle vehicle, TaskSet tasks) throws TimeoutException
 	{
 		long startTime = System.currentTimeMillis();
 		int iterations = 0;
-		
+
 		City currentCity = vehicle.getCurrentCity();
 		Plan plan = new Plan(currentCity);
-		
+
 		State initialState = getInitialState(vehicle, tasks);
-		
+
 		Queue<State> stateQueue = new LinkedList<>();
 		stateQueue.add(initialState);
-		
-		Set<State> visitedStates = new HashSet<>();
-		visitedStates.add(initialState);
-		
-		// temp set for children states before being added to the queue
-		Map<State, Double> tempChildrenStates = new HashMap<>();
-		
-		boolean foundFinal = false;
-		Set<State> finalStates = new HashSet<>();
-		
-		// Stop when the queue is empty AND we have found a final state
-		// (otherwise fill the queue with the temp children states)
-		while (!(stateQueue.isEmpty() && foundFinal))
+
+		Map<State, Double> visitedStates = new HashMap<>();
+		visitedStates.put(initialState, initialState.getChainCost());
+
+		State bestState = null;
+
+		while (!stateQueue.isEmpty())
 		{
 			checkElapsedTime(startTime);
-			
-			if (stateQueue.isEmpty())
-			{
-				// State queue is empty but we did not found a final, thus move the temp children states to the queue
-				stateQueue.addAll(tempChildrenStates.keySet());
-				
-				// Mark new states as visited and add them to the queue
-				visitedStates.addAll(tempChildrenStates.keySet());
-				
-				// Go straight to the iterating on the states of the next level
-				tempChildrenStates = new HashMap<>();
-				continue;
-			}
-			
 			iterations++;
+
 			State state = stateQueue.poll();
-			if (state.isFinalState())
+
+			if (state.isFinalState() && (bestState == null || state.getChainCost() < bestState.getChainCost()))
 			{
-				foundFinal = true;
-				
-				// we only keep all finals with minimum depth
-				finalStates.add(state);
-				continue;
+				bestState = state;
 			}
-			
-			// Generate new states
-			Set<State> newStates = computeDerivedStates(state, vehicle).stream()
-				.filter(Predicate.not(visitedStates::contains))
-				.collect(Collectors.toSet());
-			
-			// Don't immediately add children states to the queue, as we may found a better parent for the same child on
-			// this same level
-			for (State newState: newStates)
+
+			for (State newState: computeDerivedStates(state, vehicle))
 			{
-				double newStateCost = newState.getChainCost();
-				if (!tempChildrenStates.containsKey(newState) ||
-					(tempChildrenStates.containsKey(newState) &&
-						newStateCost < tempChildrenStates.get(newState)))
+				if (!visitedStates.containsKey(newState)
+					||
+					(visitedStates.containsKey(newState) && newState.getChainCost() < visitedStates.get(newState)))
 				{
-					tempChildrenStates.put(newState, newStateCost);
+					stateQueue.add(newState);
+					visitedStates.put(newState, newState.getChainCost());
 				}
 			}
 		}
-		
+
 		System.out.printf("[BFS] iterations: %d%n", iterations);
-		
-		State bestState = finalStates.stream().min(Comparator.comparing(State::getChainCost)).get();
-		System.out.printf("[BFS] min cost: %f%n", bestState.getChainCost());
-		
+
 		fillPlan(plan, bestState);
+		System.out.printf("[BFS] min cost: %f%n", vehicle.costPerKm() * plan.totalDistance());
 		return plan;
 	}
 	

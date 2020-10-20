@@ -45,4 +45,13 @@ public class ActionDeliberative {
     {
         return pickupTasks.stream().map(task -> task.weight).reduce(0, Integer::sum) <= state.getResidualCapacity();
     }
+    
+    @Override
+    public String toString()
+    {
+        return "ActionDeliberative{" +
+            "destination=" + destination +
+            ", pickedUpTasks=" + pickedUpTasks +
+            '}';
+    }
 }
