@@ -1,0 +1,58 @@
+6 tasks
+
+[BFS] iterations: 3141
+[BFS] min cost: 6900,000000
+[BFS] planning time: 230ms
+
+H1
+[ASTAR] iterations: 1383
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 173ms
+
+H2
+[ASTAR] iterations: 986
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 172ms
+
+H3
+[ASTAR] iterations: 282
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 181ms
+
+H4
+[ASTAR] iterations: 950
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 361ms
+
+H5
+[ASTAR] iterations: 592
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 92ms
+
+
+
+10 tasks
+
+[BFS] iterations: 842191
+[BFS] min cost: 9100,000000
+[BFS] planning time: 27926ms
+
+H1
+[ASTAR] iterations: 405931
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 29909ms
+
+H2
+[ASTAR] iterations: 92099
+[ASTAR] min cost: 9400,000000
+[ASTAR] planning time: 19290ms
+
+H3
+[ASTAR] iterations: 107420
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 57627ms
+
+H5
+[ASTAR] iterations: 195946
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 12670ms

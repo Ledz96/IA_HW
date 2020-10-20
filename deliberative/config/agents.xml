@@ -16,7 +16,14 @@
 		<set algorithm="BFS"/>
 	</agent>
 
-	<agent name="deliberative-ASTAR">
+	<agent name="deliberative-ASTAR-H1">
+		<set class-path="bin/"/>
+		<set class-name="template.DeliberativeTemplate"/>
+		<set algorithm="ASTAR"/>
+		<set heuristic="H1"/>
+	</agent>
+
+	<agent name="deliberative-ASTAR-H2">
 		<set class-path="bin/"/>
 		<set class-name="template.DeliberativeTemplate"/>
 		<set algorithm="ASTAR"/>

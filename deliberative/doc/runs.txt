@@ -1,0 +1,96 @@
+=== BFS ===
+
+6 tasks
+[BFS] iterations: 3047
+[BFS] min cost: 6900,000000
+[BFS] planning time: 230ms
+
+7 tasks
+[BFS] iterations: 15494
+[BFS] min cost: 8050,000000
+[BFS] planning time: 586ms
+
+8 tasks
+[BFS] iterations: 66742
+[BFS] min cost: 8550,000000
+[BFS] planning time: 1658ms
+
+9 tasks
+[BFS] iterations: 239391
+[BFS] min cost: 8600,000000
+[BFS] planning time: 5901ms
+
+10 tasks
+[BFS] iterations: 784869
+[BFS] min cost: 9100,000000
+[BFS] planning time: 18740ms
+
+11 tasks
+timeout
+
+
+=== ASTAR H1 ===
+
+6 tasks
+[ASTAR] iterations: 1441
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 221ms
+
+7 tasks
+[ASTAR] iterations: 8438
+[ASTAR] min cost: 8050,000000
+[ASTAR] planning time: 588ms
+
+8 tasks
+[ASTAR] iterations: 35504
+[ASTAR] min cost: 8550,000000
+[ASTAR] planning time: 2195ms
+
+9 tasks
+[ASTAR] iterations: 92578
+[ASTAR] min cost: 8600,000000
+[ASTAR] planning time: 6151ms
+
+10 tasks
+[ASTAR] iterations: 434081
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 29426ms
+
+11 tasks
+timeout
+
+
+=== ASTAR H2 ===
+
+6 tasks
+[ASTAR] iterations: 593
+[ASTAR] min cost: 6900,000000
+[ASTAR] planning time: 113ms
+
+7 tasks
+[ASTAR] iterations: 4178
+[ASTAR] min cost: 8050,000000
+[ASTAR] planning time: 316ms
+
+8 tasks
+[ASTAR] iterations: 16892
+[ASTAR] min cost: 8550,000000
+[ASTAR] planning time: 929ms
+
+9 tasks
+[ASTAR] iterations: 39850
+[ASTAR] min cost: 8600,000000
+[ASTAR] planning time: 2054ms
+
+10 tasks
+[ASTAR] iterations: 196137
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 9919ms
+
+11 tasks
+[ASTAR] iterations: 480469
+[ASTAR] min cost: 9100,000000
+[ASTAR] planning time: 28080ms
+
+12 tasks
+timeout
