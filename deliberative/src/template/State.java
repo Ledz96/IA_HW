@@ -90,7 +90,6 @@ public class State {
             ", pickedUpTasks=" + pickedUpTasks +
             ", availableTasks=" + availableTasks +
             ", previousChainLink=" + previousChainLink +
-            ", chainDepth=" + chainDepth +
             '}';
     }
 }
