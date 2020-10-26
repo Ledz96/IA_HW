@@ -201,7 +201,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			.collect(Collectors.toSet());
 	}
 	
-	private void fillPlan(Plan plan, State finalState)
+		private void fillPlan(Plan plan, State finalState)
 	{
 		// Recursively climb up the chain of states and explore the chain back down while filling out the plan
 		
