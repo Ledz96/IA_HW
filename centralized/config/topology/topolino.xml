@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<topology name="england" >
+
+    <!-- the list of cities in the topology -->
+    <cities>
+        <city x="200" y="400" name="London"/>
+        <city x="300" y= "400" name="Newcastle"/>
+        <city x="500" y="400" name="Leeds"/>
+    </cities>
+
+    <!-- the list of routes in the topology
+
+        @note: All distances are given in miles !!!
+    -->
+    <routes>
+        <route distance="100"  from="London" to="Newcastle"/>
+        <route distance="200"  from="Newcastle" to="Leeds"/>
+    </routes>
+
+</topology>

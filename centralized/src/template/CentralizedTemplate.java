@@ -4,7 +4,8 @@ package template;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import logist.LogistSettings;
 
@@ -37,6 +38,8 @@ public class CentralizedTemplate implements CentralizedBehavior
 	private Algorithm algorithm;
 	private double epsilon;
 	
+	private final int N_ITER = 10000;
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution, Agent agent)
 	{
@@ -60,6 +63,7 @@ public class CentralizedTemplate implements CentralizedBehavior
 		String algorithmName = agent.readProperty("algorithm", String.class, "naive");
 		algorithm = Algorithm.valueOf(algorithmName);
 		
+		// TODO rename abandonProbability?
 		epsilon = agent.readProperty("epsilon", Double.class, 0.5);
 		
 		this.topology = topology;
@@ -83,7 +87,7 @@ public class CentralizedTemplate implements CentralizedBehavior
 		}
 		else // SLS
 		{
-			plans = slsPlan(vehicles, tasks);
+			plans = slsPlan(vehicles, tasks).getPlanList();
 		}
 		
 		long time_end = System.currentTimeMillis();
@@ -122,43 +126,47 @@ public class CentralizedTemplate implements CentralizedBehavior
 		return plan;
 	}
 	
-	private List<Plan> selectInitialSolution(List<Vehicle> vehicles, TaskSet tasks)
+	private Solution selectInitialSolution(List<Vehicle> vehicleList, TaskSet tasks)
 	{
-		// TODO ...
+		// Give all tasks to the first vehicle, to be picked up and delivered sequentially
+		// TOCHECK here we assume that all vehicle can pickup any task provided the vehicle's initial capacity
+		
+		List<CentralizedPlan> centralizedPlanList= new ArrayList<>();
+		
+		centralizedPlanList.add(new CentralizedPlan(
+			vehicleList.get(0).homeCity(),
+			tasks.stream()
+				.flatMap(task -> Stream.of(
+					new CentralizedAction(CentralizedAction.ActionType.PickUp, task),
+					new CentralizedAction(CentralizedAction.ActionType.Deliver, task)))
+				.collect(Collectors.toCollection(LinkedList::new))));
+		
+		vehicleList.stream().skip(1)
+			.forEach(vehicle -> centralizedPlanList.add(new CentralizedPlan(vehicle.homeCity(), new LinkedList<>())));
+		
+		return new Solution(vehicleList, centralizedPlanList);
 	}
 	
-	private Set<List<Plan>> chooseNeighbors()
+	private Solution localChoice(Set<Solution> planListSet)
 	{
-		// TODO ...
-	}
-	
-	private double computePlanListCost(List<Plan> planList, List<Vehicle> vehicles)
-	{
-		return IntStream.range(0, planList.size())
-			.mapToObj(i -> new Pair<Plan, Vehicle>(planList.get(i), vehicles.get(i)))
-			.map(pair -> pair._2().costPerKm() * pair._1().totalDistance())
-			.reduce(Double::sum).get();
-	}
-	
-	private List<Plan> localChoice(Set<List<Plan>> planListSet, List<Vehicle> vehicles)
-	{
+		System.out.println(planListSet);
+		
 		return planListSet.stream()
-			.map(planList -> new Pair<List<Plan>, Double>(planList, computePlanListCost(planList, vehicles)))
-			.min(Comparator.comparingDouble(Pair::_2))
-			.get()._1();
+			.min(Comparator.comparingDouble(Solution::computeCost))
+			.get();
 	}
 	
-	private List<Plan> slsPlan(List<Vehicle> vehicles, TaskSet tasks)
+	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks)
 	{
 		Random random = new Random(0);
-		List<Plan> solution = selectInitialSolution(vehicles, tasks);
+		Solution solution = selectInitialSolution(vehicleList, tasks);
 		
-		boolean condition = false;
-		while(!condition)
+		for (int i = 0; i < N_ITER; i++)
 		{
 			if (random.nextFloat() < epsilon)
-				solution = localChoice(chooseNeighbors(), vehicles);
-			// TODO ...
+				solution = localChoice(solution.chooseNeighbors(random));
 		}
+		
+		return solution;
 	}
 }

@@ -4,8 +4,8 @@ import java.util.Objects;
 
 public class Pair<T1,T2>
 {
-	private final T1 _1;
-	private final T2 _2;
+	protected final T1 _1;
+	protected final T2 _2;
 	
 	public T1 _1()
 	{
@@ -50,3 +50,4 @@ public class Pair<T1,T2>
 			'}';
 	}
 }
+
