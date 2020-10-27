@@ -54,7 +54,7 @@ public class CentralizedPlan
 		Task task = pickupAction.getTask();
 		// Remove Deliver action for same task (and assert something is removed!)
 		assert actionList.removeFirstOccurrence(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-		
+
 		return pickupAction.getTask();
 	}
 	

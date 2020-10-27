@@ -64,9 +64,10 @@ public class Solution
 				List<CentralizedPlan> newCentralizedPlanList = centralizedPlanList.stream()
 					.map(CentralizedPlan::new)
 					.collect(Collectors.toList());
-				
+
 				Task task = newCentralizedPlanList.get(randomIndex).popTask();
 				newCentralizedPlanList.get(j).pushTask(task);
+
 				neighbors.add(new Solution(vehicleList, newCentralizedPlanList));
 			});
 		
@@ -83,18 +84,18 @@ public class Solution
 			.collect(Collectors.toSet());
 		
 //		for (LinkedList<CentralizedAction> permutedPickupActionList: Helper.permutations(pickupActionList))
+
 		for (LinkedList<CentralizedAction> permutedPickupActionList: new Permutations<CentralizedAction>().get(pickupActionList))
 		{
 			List<LinkedList<CentralizedAction>> partialPlanList = new LinkedList<>();
 			partialPlanList.add(permutedPickupActionList);
-			
-			IntStream.range(1, 2 * pickupActionList.size()).forEachOrdered(pos -> {
-				
-				ListIterator<LinkedList<CentralizedAction>> it = partialPlanList.listIterator();
-				while (it.hasNext())
+
+			for (int pos = 1; pos < 2*pickupActionList.size(); pos++)
+			{
+				List<LinkedList<CentralizedAction>> newPlanList = new LinkedList<>();
+
+				for (LinkedList<CentralizedAction> partialPlan : partialPlanList)
 				{
-					LinkedList<CentralizedAction> partialPlan = it.next();
-					
 					// Get list of carried tasks (tasks we have picked up but haven't delivered yet)
 					
 					Set<Task> carriedTasks = new HashSet<>();
@@ -110,28 +111,29 @@ public class Solution
 						                       .filter(CentralizedAction::isDeliver)
 						                       .map(CentralizedAction::getTask)
 						                       .collect(Collectors.toSet()));
-					// Discard plan if impossible according to vehicle's capacity
+
+					// Discard plan if incomplete or impossible according to vehicle's capacity
 					if (carriedTasks.stream().map(task -> task.weight).reduce(0, Integer::sum) >
 						vehicleList.get(randomIndex).capacity())
 					{
-						it.remove();
+						continue;
 					}
-					
-					// Remove incomplete plans
-					if (pos >= partialPlan.size())
-					{
-						it.remove();
+
+					if (!(pos >= partialPlan.size())) {
+						newPlanList.add(partialPlan);
 					}
 					
 					for (Task task: carriedTasks)
 					{
 						LinkedList<CentralizedAction> newPartialPlan = new LinkedList<>(partialPlan);
 						newPartialPlan.add(pos, new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-						it.add(newPartialPlan);
+						newPlanList.add(newPartialPlan);
 					}
 				}
-			});
-			
+
+				partialPlanList = newPlanList;
+			}
+
 			neighbors.addAll(partialPlanList.stream().map(finalPlan -> {
 				List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
 				centralizedPlanList.set(randomIndex,
@@ -139,7 +141,13 @@ public class Solution
 				return new Solution(vehicleList, newCentralizedPlanList);
 			}).collect(Collectors.toSet()));
 		}
-		
+
+		neighbors.stream().forEach(sol -> {
+				sol.getCentralizedPlanList().stream().forEach(centPlan -> {
+					System.out.println(centPlan.getActionList());
+				});
+		});
+
 		return neighbors;
 	}
 }

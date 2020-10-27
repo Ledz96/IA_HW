@@ -149,8 +149,18 @@ public class CentralizedTemplate implements CentralizedBehavior
 	
 	private Solution localChoice(Set<Solution> planListSet)
 	{
-		System.out.println(planListSet);
-		
+		//System.out.println(planListSet);
+
+		Iterator<Solution> i = planListSet.iterator();
+		Solution sol = i.next();
+		List<Vehicle> vehicleList = sol.getVehicleList();
+
+		planListSet.stream().map(Solution::getCentralizedPlanList).forEach(centralizedPlanList -> {
+			Helper.enumerate(centralizedPlanList).map(p -> new Pair<>(p._1, p._2().getActionList())).forEach(pair -> {
+				assert(pair._2.stream().map(a -> a.getTask().weight).reduce(0, Integer::sum) <= vehicleList.get(pair._1).capacity());
+			});
+		});
+
 		return planListSet.stream()
 			.min(Comparator.comparingDouble(Solution::computeCost))
 			.get();
@@ -166,6 +176,10 @@ public class CentralizedTemplate implements CentralizedBehavior
 			if (random.nextFloat() < epsilon)
 				solution = localChoice(solution.chooseNeighbors(random));
 		}
+
+		Helper.enumerate(solution.getCentralizedPlanList()).map(p -> new Pair<>(p._1, p._2().getActionList())).forEach(pair -> {
+			assert(pair._2.stream().map(a -> a.getTask().weight).reduce(0, Integer::sum) <= vehicleList.get(pair._1).capacity());
+		});
 		
 		return solution;
 	}
