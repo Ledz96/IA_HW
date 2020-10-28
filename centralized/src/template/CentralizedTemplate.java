@@ -169,17 +169,38 @@ public class CentralizedTemplate implements CentralizedBehavior
 	
 	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks)
 	{
-		System.out.println(tasks);
+//		System.out.println(tasks);
 		
 		Random random = new Random(0);
 		Solution solution = selectInitialSolution(vehicleList, tasks);
 		
+		Solution localMinimum = solution;
+		int stuck = 0;
+		
 		for (int i = 0; i < N_ITER; i++)
 		{
 			if (random.nextFloat() < epsilon)
-				solution = localChoice(solution.chooseNeighbors(random));
+			{
+				solution = localChoice(solution.chooseNeighbors(100, random));
+				stuck = 0;
+			}
+			else
+			{
+				stuck++;
+			}
+			
+			if (stuck >= 100)
+			{
+				if (solution.computeCost() < localMinimum.computeCost())
+					localMinimum = solution;
+				
+				solution = selectInitialSolution(vehicleList, tasks);
+			}
+			
+//			if (i % 100 == 0)
+				System.out.printf("i: %d%n", i);
 		}
 		
-		return solution;
+		return solution.computeCost() < localMinimum.computeCost() ? solution : localMinimum;
 	}
 }

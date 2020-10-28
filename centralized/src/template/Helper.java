@@ -53,4 +53,13 @@ public class Helper
 //	{
 //		return _permutations(new LinkedList<>(list), new HashSet<>());
 //	}
+	
+	public static long factorial(int num)
+	{
+		assert num >= 0;
+		
+		if (num == 0)
+			return 1;
+		return num * factorial(num - 1);
+	}
 }

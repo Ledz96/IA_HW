@@ -4,28 +4,27 @@ import logist.plan.Plan;
 import logist.task.Task;
 import logist.topology.Topology;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CentralizedPlan
 {
 	private final Topology.City initialCity;
-	private final LinkedList<CentralizedAction> actionList;
+	private final List<CentralizedAction> actionList;
 	
 	public Topology.City getInitialCity()
 	{
 		return initialCity;
 	}
 	
-	public LinkedList<CentralizedAction> getActionList()
+	public List<CentralizedAction> getActionList()
 	{
 		return actionList;
 	}
 	
-	public CentralizedPlan(Topology.City initialCity, LinkedList<CentralizedAction> actionList)
+	public CentralizedPlan(Topology.City initialCity, List<CentralizedAction> actionList)
 	{
 		this.initialCity = initialCity;
 		// TODO check actionList validity? (deliver after pickup, capacity, ...)
@@ -35,7 +34,7 @@ public class CentralizedPlan
 	public CentralizedPlan(CentralizedPlan plan)
 	{
 		this.initialCity = plan.getInitialCity();
-		this.actionList = new LinkedList<>(plan.getActionList());
+		this.actionList = new ArrayList<>(plan.getActionList());
 	}
 	
 	public boolean isEmpty()
@@ -45,8 +44,10 @@ public class CentralizedPlan
 	
 	public void pushTask(Task task)
 	{
-		actionList.addFirst(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-		actionList.addFirst(new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
+//		actionList.addFirst(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+//		actionList.addFirst(new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
+		actionList.add(0, new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+		actionList.add(0, new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
 	}
 	
 //	public Task popTask()
