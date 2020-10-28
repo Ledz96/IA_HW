@@ -4,6 +4,8 @@ import logist.plan.Plan;
 import logist.task.Task;
 import logist.topology.Topology;
 
+import java.util.Objects;
+
 public final class CentralizedAction
 {
 	public enum ActionType
@@ -61,6 +63,24 @@ public final class CentralizedAction
 			plan.appendDelivery(task);
 			return task.deliveryCity;
 		}
+	}
+	
+	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		CentralizedAction that = (CentralizedAction) o;
+		return actionType == that.actionType &&
+			Objects.equals(task, that.task);
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(actionType, task);
 	}
 	
 	@Override

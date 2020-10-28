@@ -14,7 +14,7 @@
 		<set class-path="bin/"/>
 		<set class-name="template.CentralizedTemplate"/>
 		<set algorithm="SLS"/>
-		<set epsilon="0.5"/>
+		<set epsilon="0.3"/>
 	</agent>
 	
 </agents>

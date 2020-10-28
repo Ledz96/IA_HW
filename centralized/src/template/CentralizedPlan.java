@@ -5,6 +5,10 @@ import logist.task.Task;
 import logist.topology.Topology;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CentralizedPlan
 {
@@ -45,17 +49,28 @@ public class CentralizedPlan
 		actionList.addFirst(new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
 	}
 	
-	public Task popTask()
+//	public Task popTask()
+//	{
+//		CentralizedAction pickupAction = actionList.removeFirst();
+//		// Assert first action is always a PickUp
+//		assert pickupAction.isPickup();
+//
+//		Task task = pickupAction.getTask();
+//		// Remove Deliver action for same task (and assert something is removed!)
+//		assert actionList.removeFirstOccurrence(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+//
+//		return pickupAction.getTask();
+//	}
+	
+	public Task popTask(Random random)
 	{
-		CentralizedAction pickupAction = actionList.removeFirst();
-		// Assert first action is always a PickUp
-		assert pickupAction.isPickup();
-		
-		Task task = pickupAction.getTask();
-		// Remove Deliver action for same task (and assert something is removed!)
-		assert actionList.removeFirstOccurrence(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-		
-		return pickupAction.getTask();
+		List<CentralizedAction> pickupStream = actionList.stream().filter(CentralizedAction::isPickup).collect(Collectors.toList());
+		Task randomPickupTask = pickupStream.stream().skip(random.nextInt(pickupStream.size())).findFirst().get().getTask();
+
+		assert actionList.remove(new CentralizedAction(CentralizedAction.ActionType.PickUp, randomPickupTask));
+		assert actionList.remove(new CentralizedAction(CentralizedAction.ActionType.Deliver, randomPickupTask));
+
+		return randomPickupTask;
 	}
 	
 	public Plan toPlan()
@@ -65,5 +80,14 @@ public class CentralizedPlan
 		for (CentralizedAction action: actionList)
 			city = action.addToPlan(plan, city);
 		return plan;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "CentralizedPlan{" +
+			"initialCity=" + initialCity +
+			", actionList=" + actionList +
+			'}';
 	}
 }

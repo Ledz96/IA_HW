@@ -4,6 +4,7 @@ package template;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -147,17 +148,29 @@ public class CentralizedTemplate implements CentralizedBehavior
 		return new Solution(vehicleList, centralizedPlanList);
 	}
 	
-	private Solution localChoice(Set<Solution> planListSet)
+	private Solution localChoice(Set<Solution> solutionSet)
 	{
-		System.out.println(planListSet);
+		assert solutionSet.stream()
+			.map(Solution::getCentralizedPlanList)
+			.anyMatch(planList -> planList.stream()
+				.skip(1)
+				.anyMatch(Predicate.not(CentralizedPlan::isEmpty)));
 		
-		return planListSet.stream()
+//		for (Solution solution: solutionSet)
+//		{
+//			System.out.println(solution);
+//			System.out.println(solution.computeCost());
+//		}
+		
+		return solutionSet.stream()
 			.min(Comparator.comparingDouble(Solution::computeCost))
 			.get();
 	}
 	
 	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks)
 	{
+		System.out.println(tasks);
+		
 		Random random = new Random(0);
 		Solution solution = selectInitialSolution(vehicleList, tasks);
 		
