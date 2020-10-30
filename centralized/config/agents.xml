@@ -14,9 +14,9 @@
 		<set class-path="bin/"/>
 		<set class-name="template.CentralizedTemplate"/>
 		<set algorithm="SLS"/>
-		<set iterations="10000"/>
-		<set stuck-limit="1000"/>
-		<set explore-prob="0.5"/>
+		<set iterations="20000"/>
+		<set stuck-limit="2000"/>
+		<set explore-prob="0.3"/>
 	</agent>
 	
 </agents>

@@ -30,7 +30,7 @@ public class CentralizedPlan
 		return residualCapacity;
 	}
 	
-	public CentralizedPlan(Vehicle vehicle, List<CentralizedAction> actionList) throws RuntimeException
+	public CentralizedPlan(Vehicle vehicle, List<CentralizedAction> actionList) throws ExceededCapacityException
 	{
 		this.vehicle = vehicle;
 		this.actionList = new ArrayList<>();
@@ -38,7 +38,7 @@ public class CentralizedPlan
 		
 		actionList.forEach(action -> {
 			if (!addAction(action))
-				throw new RuntimeException(String.format("Vehicle capacity exceeded with action: %s", action));
+				throw new ExceededCapacityException(String.format("Action: %s", action));
 		});
 	}
 	
@@ -171,5 +171,15 @@ public class CentralizedPlan
 			}
 		}
 		return plan;
+	}
+	
+	@Override
+	public String toString()
+	{
+		return "CentralizedPlan{" +
+			"vehicle=" + vehicle +
+			", actionList=" + actionList +
+			", residualCapacity=" + residualCapacity +
+			'}';
 	}
 }

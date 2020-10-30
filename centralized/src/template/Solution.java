@@ -5,8 +5,10 @@ import logist.simulation.Vehicle;
 import logist.task.Task;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Solution
 {
@@ -15,7 +17,7 @@ public class Solution
 	// TODO remove?
 	private final List<Vehicle> vehicleList;
 	
-	private Map<PartialState, Double> stateCostMap;
+//	private Map<PartialState, Double> stateCostMap;
 	
 	public List<CentralizedPlan> getCentralizedPlanList()
 	{
@@ -33,7 +35,7 @@ public class Solution
 		
 		this.centralizedPlanList = centralizedPlanList;
 		this.vehicleList = centralizedPlanList.stream().map(CentralizedPlan::getVehicle).collect(Collectors.toList());
-		this.stateCostMap = new HashMap<>();
+//		this.stateCostMap = new HashMap<>();
 	}
 	
 	public double computeCost()
@@ -247,16 +249,96 @@ public class Solution
 		return neighbors;
 	}
 	
-//	public Set<Solution> chooseSwapNeighbors(Random random)
-//	{
-//		Set<Solution> neighbors = new HashSet<>();
-//		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
-//
-//		for (int pos = 0; pos < centralizedPlanList.get(randomIndex).getLength(); pos++)
-//		{
-//
-//		}
-//	}
+	private Set<CentralizedPlan> moveLeft(Vehicle vehicle, List<CentralizedAction> actionList, int pos)
+	{
+		if (pos <= 0)
+			return new HashSet<>();
+		
+		CentralizedAction posAction = actionList.get(pos);
+		CentralizedAction prevAction = actionList.get(pos - 1);
+		
+		List<CentralizedAction> newActionList = new ArrayList<>(actionList);
+		newActionList.set(pos, prevAction);
+		newActionList.set(pos - 1, posAction);
+		
+		if (posAction.isPickup())
+		{
+			try
+			{
+				new CentralizedPlan(vehicle, newActionList);
+			}
+			catch (ExceededCapacityException ex)
+			{
+				return new HashSet<>();
+			}
+		}
+		
+		if (posAction.isDeliver() &&
+			prevAction.isPickup() &&
+			prevAction.getTask() == posAction.getTask())
+			return new HashSet<>();
+		
+		Set<CentralizedPlan> ret = moveLeft(vehicle, newActionList, pos - 1);
+		ret.add(new CentralizedPlan(vehicle, newActionList));
+		return ret;
+	}
+	
+	private Set<CentralizedPlan> moveRight(Vehicle vehicle, List<CentralizedAction> actionList, int pos)
+	{
+		if (pos >= actionList.size() - 1)
+			return new HashSet<>();
+		
+		CentralizedAction posAction = actionList.get(pos);
+		CentralizedAction nextAction = actionList.get(pos + 1);
+		
+		if (posAction.isPickup() &&
+			nextAction.isDeliver() &&
+			nextAction.getTask() == posAction.getTask())
+			return new HashSet<>();
+		
+		List<CentralizedAction> newActionList = new ArrayList<>(actionList);
+		newActionList.set(pos, nextAction);
+		newActionList.set(pos + 1, posAction);
+		
+		if (posAction.isDeliver())
+		{
+			try
+			{
+				new CentralizedPlan(vehicle, newActionList);
+			}
+			catch (ExceededCapacityException ex)
+			{
+				return new HashSet<>();
+			}
+		}
+		
+		Set<CentralizedPlan> ret = moveRight(vehicle, newActionList, pos + 1);
+		ret.add(new CentralizedPlan(vehicle, newActionList));
+		return ret;
+	}
+	
+	public Set<Solution> chooseSwapNeighbors(Random random)
+	{
+		Set<Solution> neighbors = new HashSet<>();
+		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
+
+		for (int pos = 0; pos < centralizedPlanList.get(randomIndex).getLength(); pos++)
+		{
+			Stream.concat(moveLeft(vehicleList.get(randomIndex),
+			                          centralizedPlanList.get(randomIndex).getActionList(),
+			                          pos).stream(),
+			              moveRight(vehicleList.get(randomIndex),
+			                       centralizedPlanList.get(randomIndex).getActionList(),
+			                       pos).stream())
+				.forEach(plan -> {
+					List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
+					newCentralizedPlanList.set(randomIndex, plan);
+					neighbors.add(new Solution(newCentralizedPlanList));
+				});
+		}
+		
+		return neighbors;
+	}
 	
 	@Override
 	public boolean equals(Object o)
@@ -280,7 +362,8 @@ public class Solution
 	public String toString()
 	{
 		return "Solution{" +
-			", centralizedPlanList=" + centralizedPlanList +
+			"centralizedPlanList=" + centralizedPlanList +
+			", vehicleList=" + vehicleList +
 			'}';
 	}
 }

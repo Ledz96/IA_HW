@@ -173,12 +173,17 @@ public class CentralizedTemplate implements CentralizedBehavior
 		
 		for (Task randomTask : taskList)
 		{
+//			long start_time = System.currentTimeMillis();
+			
 			Comparator<Pair<Vehicle, Double>> comparator = Comparator.comparingDouble(Pair::_2);
 			PriorityQueue<Pair<Vehicle, Double>> vehicleDistanceQueue = new PriorityQueue<>(comparator);
 			vehicleDistanceQueue.addAll(vehiclePlanMap.entrySet().stream()
 				                            .map(entry -> new Pair<>(entry.getKey(),
 				                                                    randomTask.pickupCity.distanceTo(entry.getValue().getCurrentCity())))
 				                            .collect(Collectors.toList()));
+			
+//			long end_time = System.currentTimeMillis();
+//			System.out.printf("selectOptimizedInitialSolution: %d%n", end_time - start_time);
 			
 			while (true)
 			{
@@ -249,7 +254,6 @@ public class CentralizedTemplate implements CentralizedBehavior
 	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks, long startTime)
 	{
 		Random random = new Random(0);
-//		Solution solution = selectNaiveInitialSolution(vehicleList, tasks);
 		Solution solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
 		Solution localMinimum = solution;
 		
@@ -260,15 +264,9 @@ public class CentralizedTemplate implements CentralizedBehavior
 		long currentTime = System.currentTimeMillis();
 		while (iter < N_ITER && currentTime - startTime + maxIterationTime < timeout_plan)
 		{
-			
-			
-			
 			if (random.nextDouble() < exploreProb)
 			{
-//				System.out.printf("Solution cost: %f%n", solution.computeCost());
-//				System.out.printf("stuck: %d%n", stuck);
-
-				solution = localChoice(solution.chooseRandomNeighbors(1000, random));
+				solution = localChoice(solution.chooseSwapNeighbors(random));
 
 				if (solution.computeCost() < localMinimum.computeCost())
 				{
@@ -281,32 +279,9 @@ public class CentralizedTemplate implements CentralizedBehavior
 				}
 			}
 			
-//			Set<Solution> neighbors = solution.chooseRandomNeighbors(1000, random);
-//			if (random.nextDouble() < exploreProb)
-//			{
-//				solution = localChoice(neighbors);
-//			}
-//			else
-//			{
-//				solution = neighbors.stream().skip((long) (random.nextDouble() * neighbors.size())).findFirst().get();
-//			}
-//
-//			if (solution.computeCost() < localMinimum.computeCost())
-//			{
-//				localMinimum = solution;
-//				stuck = 0;
-//			}
-//			else
-//			{
-//				stuck++;
-//			}
-			
-			
-			
 			if (stuck >= STUCK_LIMIT)
 			{
 				System.out.println("reset");
-//				solution = selectNaiveInitialSolution(vehicleList, tasks);
 				solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
 				stuck = 0;
 			}
