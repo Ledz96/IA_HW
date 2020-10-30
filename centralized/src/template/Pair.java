@@ -17,10 +17,10 @@ public class Pair<T1,T2>
 		return _2;
 	}
 	
-	public Pair(T1 first, T2 second)
+	public Pair(T1 _1, T2 _2)
 	{
-		this._1 = first;
-		this._2 = second;
+		this._1 = _1;
+		this._2 = _2;
 	}
 	
 	@Override

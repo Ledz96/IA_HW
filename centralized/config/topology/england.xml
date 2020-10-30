@@ -26,7 +26,6 @@
 		<route distance="74.8" from="Portsmouth" to="London"/>
 		<route distance="115"  from="London" to="Norwich"/>
 		<route distance="118"  from="London" to="Birmingham"/>
-<!--		<route distance="1180"  from="London" to="Birmingham"/>-->
 		<route distance="115"  from="Birmingham" to="Cardiff"/>
 		<route distance="94.9" from="Birmingham" to="Manchester"/>
 		<route distance="90.2" from="Birmingham" to="Sheffield"/>

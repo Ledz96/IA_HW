@@ -1,8 +1,6 @@
 package template;
 
-import logist.plan.Plan;
 import logist.task.Task;
-import logist.topology.Topology;
 
 import java.util.Objects;
 
@@ -15,11 +13,6 @@ public final class CentralizedAction
 	
 	private final ActionType actionType;
 	private final Task task;
-	
-//	public ActionType getActionType()
-//	{
-//		return actionType;
-//	}
 	
 	public Task getTask()
 	{
@@ -40,29 +33,6 @@ public final class CentralizedAction
 	public boolean isDeliver()
 	{
 		return actionType == ActionType.Deliver;
-	}
-	
-	// TODO move outside?
-	/**
-	 * Append logist actions needed for the CentralizedAction to be performed to the plan
-	 * @param plan
-	 * @param currentCity
-	 * @return current City after the action
-	 */
-	public Topology.City addToPlan(Plan plan, Topology.City currentCity)
-	{
-		if (actionType == ActionType.PickUp)
-		{
-			currentCity.pathTo(task.pickupCity).forEach(plan::appendMove);
-			plan.appendPickup(task);
-			return task.pickupCity;
-		}
-		else // Deliver
-		{
-			currentCity.pathTo(task.deliveryCity).forEach(plan::appendMove);
-			plan.appendDelivery(task);
-			return task.deliveryCity;
-		}
 	}
 	
 	@Override
