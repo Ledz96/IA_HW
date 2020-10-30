@@ -165,8 +165,6 @@ public class CentralizedTemplate implements CentralizedBehavior
 		// to the former, otherwise add a Deliver action to the vehicle for the task with the delivery City which is
 		// closest to the task. Iterate getting the nearest vehicle.
 		
-		// FIXME probably the bug is due to associating the wrong plan to a vehicle
-		
 		Map<Vehicle, CentralizedPlan> vehiclePlanMap = new HashMap<>();
 		vehicleList.forEach(vehicle -> vehiclePlanMap.put(vehicle, new CentralizedPlan(vehicle, new ArrayList<>())));
 		
@@ -218,7 +216,9 @@ public class CentralizedTemplate implements CentralizedBehavior
 			.forEach(plan -> plan.getCarriedTasks()
 				.forEach(task -> plan.addAction(new CentralizedAction(CentralizedAction.ActionType.Deliver, task))));
 		
-		return new Solution(new ArrayList<>(vehiclePlanMap.values()));
+//		return new Solution(new ArrayList<>(vehiclePlanMap.values()));
+		return new Solution(new ArrayList<>(vehicleList.stream()
+			                                    .map(vehiclePlanMap::get).collect(Collectors.toList())));
 	}
 	
 //		BiFunction<Vehicle, List<CentralizedAction>, Boolean> feasible =
