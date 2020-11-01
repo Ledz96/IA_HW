@@ -4,12 +4,10 @@ package template;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.sun.source.tree.Tree;
 import logist.LogistSettings;
 
 import logist.behavior.CentralizedBehavior;
@@ -23,14 +21,18 @@ import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
 
+enum PopStrategy { first, random }
+
 /**
  * A very simple auction agent that assigns all tasks to its first vehicle and
  * handles them sequentially.
  */
-@SuppressWarnings("unused")
+//@SuppressWarnings("unused")
 public class CentralizedTemplate implements CentralizedBehavior
 {
-	enum Algorithm { naive, SLS };
+	enum Algorithm { naive, SLS }
+	enum InitializationStrategy { naive, optimized }
+	enum NeighborsStrategy { random, swap }
 	
 	private Topology topology;
 	private TaskDistribution distribution;
@@ -39,10 +41,14 @@ public class CentralizedTemplate implements CentralizedBehavior
 	private long timeout_plan;
 	
 	private Algorithm algorithm;
-	private double exploreProb;
+	private InitializationStrategy initStrategy;
+	private NeighborsStrategy neighborsStrategy;
+	private PopStrategy popStrategy;
 	
 	private int N_ITER;
 	private int STUCK_LIMIT;
+	private int randomNeighborsCount;
+	private double exploreProb;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution, Agent agent)
@@ -64,12 +70,39 @@ public class CentralizedTemplate implements CentralizedBehavior
 		timeout_plan = ls.get(LogistSettings.TimeoutKey.PLAN);
 		
 		// Get algorithm to use
-		String algorithmName = agent.readProperty("algorithm", String.class, "naive");
+		String algorithmName = agent.readProperty("algorithm", String.class, "SLS");
 		algorithm = Algorithm.valueOf(algorithmName);
+		assert algorithm == Algorithm.naive || algorithm == Algorithm.SLS;
 		
-		exploreProb = agent.readProperty("explore-prob", Double.class, 0.5);
+		// Get initialization strategy
+		String initStrategyName = agent.readProperty("init-strategy", String.class, "optimized");
+		initStrategy = InitializationStrategy.valueOf(initStrategyName);
+		assert initStrategy == InitializationStrategy.naive || initStrategy == InitializationStrategy.optimized;
+		
+		// Get neighbors computation strategy
+		String neighborsStrategyName = agent.readProperty("neighbors-strategy", String.class, "swap");
+		neighborsStrategy = NeighborsStrategy.valueOf(neighborsStrategyName);
+		assert neighborsStrategy == NeighborsStrategy.random || neighborsStrategy == NeighborsStrategy.swap;
+		
+		// Get pop strategy
+		String popStrategyName = agent.readProperty("pop-strategy", String.class, "first");
+		popStrategy = PopStrategy.valueOf(popStrategyName);
+		assert popStrategy == PopStrategy.first || popStrategy == PopStrategy.random;
+		
 		N_ITER = agent.readProperty("iterations", Integer.class, 10000);
-		STUCK_LIMIT = agent.readProperty("stuck-limit", Integer.class, 1000);
+		STUCK_LIMIT = agent.readProperty("stuck-limit", Integer.class, 500);
+		randomNeighborsCount = agent.readProperty("random-neighbors-count", Integer.class, 170);
+		exploreProb = agent.readProperty("explore-prob", Double.class, 0.5);
+		
+		System.out.println("[Config]");
+		System.out.println("    Algorithm: " + algorithm);
+		System.out.println("    Initialization strategy: " + initStrategy);
+		System.out.println("    Neighbors strategy: " + neighborsStrategy);
+		System.out.println("    Pop strategy: " + popStrategy);
+		System.out.println("    Iterations: " + N_ITER);
+		System.out.println("    Stuck limit: " + STUCK_LIMIT);
+		System.out.println("    Random neighbors count: " + randomNeighborsCount);
+		System.out.println("    Explore probability: " + exploreProb);
 		
 		this.topology = topology;
 		this.distribution = distribution;
@@ -138,9 +171,9 @@ public class CentralizedTemplate implements CentralizedBehavior
 	private Solution selectNaiveInitialSolution(List<Vehicle> vehicleList, TaskSet tasks)
 	{
 		// Give all tasks to the first vehicle, to be picked up and delivered sequentially
-		// TOCHECK here we assume that all vehicle can pickup any task provided the vehicle's initial capacity
+		// TOCHECK here we assume that all vehicles can pickup any task provided the vehicle's initial capacity
 		
-		List<CentralizedPlan> centralizedPlanList= new ArrayList<>();
+		List<CentralizedPlan> centralizedPlanList = new ArrayList<>();
 		
 		centralizedPlanList.add(new CentralizedPlan(
 			vehicleList.get(0),
@@ -158,9 +191,6 @@ public class CentralizedTemplate implements CentralizedBehavior
 	
 	private Solution selectOptimizedInitialSolution(List<Vehicle> vehicleList, TaskSet tasks, Random random)
 	{
-//		List<Task> orderedTasks = new ArrayList<>(tasks);
-//		orderedTasks.sort(Collections.reverseOrder(Comparator.comparingInt(o -> o.weight)));
-		
 		// For each task to be picked up, get the nearest vehicle. If the vehicle can carry the task assign the latter
 		// to the former, otherwise add a Deliver action to the vehicle for the task with the delivery City which is
 		// closest to the task. Iterate getting the nearest vehicle.
@@ -173,17 +203,13 @@ public class CentralizedTemplate implements CentralizedBehavior
 		
 		for (Task randomTask : taskList)
 		{
-//			long start_time = System.currentTimeMillis();
-			
 			Comparator<Pair<Vehicle, Double>> comparator = Comparator.comparingDouble(Pair::_2);
 			PriorityQueue<Pair<Vehicle, Double>> vehicleDistanceQueue = new PriorityQueue<>(comparator);
-			vehicleDistanceQueue.addAll(vehiclePlanMap.entrySet().stream()
-				                            .map(entry -> new Pair<>(entry.getKey(),
-				                                                    randomTask.pickupCity.distanceTo(entry.getValue().getCurrentCity())))
-				                            .collect(Collectors.toList()));
-			
-//			long end_time = System.currentTimeMillis();
-//			System.out.printf("selectOptimizedInitialSolution: %d%n", end_time - start_time);
+			vehicleDistanceQueue
+				.addAll(vehiclePlanMap.entrySet().stream()
+					        .map(entry -> new Pair<>(entry.getKey(),
+					                                 randomTask.pickupCity.distanceTo(entry.getValue().getCurrentCity())))
+					        .collect(Collectors.toList()));
 			
 			while (true)
 			{
@@ -222,28 +248,16 @@ public class CentralizedTemplate implements CentralizedBehavior
 				.forEach(task -> plan.addAction(new CentralizedAction(CentralizedAction.ActionType.Deliver, task))));
 		
 //		return new Solution(new ArrayList<>(vehiclePlanMap.values()));
+		// Must keep plans sorted according to their vehicle
 		return new Solution(new ArrayList<>(vehicleList.stream()
 			                                    .map(vehiclePlanMap::get).collect(Collectors.toList())));
 	}
-	
-//		BiFunction<Vehicle, List<CentralizedAction>, Boolean> feasible =
-//			(Vehicle vehicle, List<CentralizedAction> centralizedActionList) -> {
-//			int partial = 0;
-//			for (CentralizedAction action: centralizedActionList)
-//			{
-//				partial += (action.isPickup() ? +1 : -1) * action.getTask().weight;
-//				if (partial > vehicle.capacity())
-//					return false;
-//			}
-//			return true;
-//		};
 	
 	private Solution localChoice(Set<Solution> solutionSet)
 	{
 		assert solutionSet.stream()
 			.map(Solution::getCentralizedPlanList)
 			.anyMatch(planList -> planList.stream()
-				.skip(1)
 				.anyMatch(Predicate.not(CentralizedPlan::isEmpty)));
 		
 		return solutionSet.stream()
@@ -253,40 +267,57 @@ public class CentralizedTemplate implements CentralizedBehavior
 	
 	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks, long startTime)
 	{
-		Random random = new Random(0);
-		Solution solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
+//		Random random = new Random(0);
+		Random random = new Random();
+		Solution solution = initStrategy == InitializationStrategy.naive ?
+			selectNaiveInitialSolution(vehicleList, tasks)
+			:
+			selectOptimizedInitialSolution(vehicleList, tasks, random);
 		Solution localMinimum = solution;
 		
-		long maxIterationTime = 0;
+		long maxIterationTime = 0; // higher bound on next iteration time span
 		int iter = 0;
 		int stuck = 0;
 		
-		long currentTime = System.currentTimeMillis();
-		while (iter < N_ITER && currentTime - startTime + maxIterationTime < timeout_plan)
+		long beforeIterationTime = System.currentTimeMillis();
+		while (iter < N_ITER)
 		{
+			if (System.currentTimeMillis() - startTime + maxIterationTime > timeout_plan)
+			{
+				System.out.println("Reached timeout, returning best solution found");
+				break;
+			}
+			
 			if (random.nextDouble() < exploreProb)
 			{
-				solution = localChoice(solution.chooseSwapNeighbors(random));
+				solution = localChoice(neighborsStrategy == NeighborsStrategy.random ?
+					solution.chooseRandomNeighbors(randomNeighborsCount, popStrategy, random)
+					:
+					solution.chooseSwapNeighbors(popStrategy, random)
+				);
+			}
 
-				if (solution.computeCost() < localMinimum.computeCost())
-				{
-					localMinimum = solution;
-					stuck = 0;
-				}
-				else
-				{
-					stuck++;
-				}
+			if (solution.computeCost() < localMinimum.computeCost())
+			{
+				localMinimum = solution;
+				stuck = 0;
+			}
+			else
+			{
+				stuck++;
 			}
 			
 			if (stuck >= STUCK_LIMIT)
 			{
 				System.out.println("reset");
-				solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
+				solution = initStrategy == InitializationStrategy.naive ?
+					selectNaiveInitialSolution(vehicleList, tasks)
+					:
+					selectOptimizedInitialSolution(vehicleList, tasks, random);
 				stuck = 0;
 			}
 			
-			maxIterationTime = Math.max(maxIterationTime, System.currentTimeMillis() - currentTime);
+			maxIterationTime = Math.max(maxIterationTime, System.currentTimeMillis() - beforeIterationTime);
 			iter++;
 		}
 		

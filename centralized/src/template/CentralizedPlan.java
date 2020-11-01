@@ -118,31 +118,31 @@ public class CentralizedPlan
 		return true;
 	}
 	
-//	public Task popTask()
-//	{
-//		CentralizedAction pickupAction = actionList.removeFirst();
-//		// Assert first action is always a PickUp
-//		assert pickupAction.isPickup();
-//
-//		Task task = pickupAction.getTask();
-//		// Remove Deliver action for same task (and assert something is removed!)
-//		assert actionList.removeFirstOccurrence(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-//
-//		return pickupAction.getTask();
-//	}
+	private Task popTask(Task task)
+	{
+		assert actionList.remove(new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
+		boolean hadDeliver =  actionList.remove(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+		
+		if (!hadDeliver)
+			residualCapacity += task.weight;
+		
+		return task;
+	}
+	
+	public Task popFirstTask()
+	{
+		assert actionList.get(0).isPickup();
+		Task firstTask = actionList.get(0).getTask();
+		
+		return popTask(firstTask);
+	}
 	
 	public Task popRandomTask(Random random)
 	{
 		List<CentralizedAction> pickupList = actionList.stream().filter(CentralizedAction::isPickup).collect(Collectors.toList());
 		Task randomPickupTask = pickupList.stream().skip(random.nextInt(pickupList.size())).findFirst().get().getTask();
 
-		assert actionList.remove(new CentralizedAction(CentralizedAction.ActionType.PickUp, randomPickupTask));
-		boolean hadDeliver =  actionList.remove(new CentralizedAction(CentralizedAction.ActionType.Deliver, randomPickupTask));
-		
-		if (!hadDeliver)
-			residualCapacity += randomPickupTask.weight;
-
-		return randomPickupTask;
+		return popTask(randomPickupTask);
 	}
 	
 	public Plan toPlan() throws RuntimeException

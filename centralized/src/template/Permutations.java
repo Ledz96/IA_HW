@@ -12,8 +12,6 @@ public class Permutations<T>
 	
 	private void _get(Set<T> set, int level)
 	{
-//		System.out.printf("level: %d [%s]%n", level, set);
-		
 		if (set.isEmpty())
 		{
 			permRet.add(new LinkedList<>(permTemp));

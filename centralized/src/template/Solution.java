@@ -5,7 +5,6 @@ import logist.simulation.Vehicle;
 import logist.task.Task;
 
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -15,7 +14,7 @@ public class Solution
 	private final List<CentralizedPlan> centralizedPlanList;
 	
 	// TODO remove?
-	private final List<Vehicle> vehicleList;
+//	private final List<Vehicle> vehicleList;
 	
 //	private Map<PartialState, Double> stateCostMap;
 	
@@ -31,21 +30,21 @@ public class Solution
 	
 	public Solution(List<CentralizedPlan> centralizedPlanList)
 	{
-		// TODO throw if any plan is not complete
+		assert centralizedPlanList.stream().allMatch(CentralizedPlan::isComplete);
 		
 		this.centralizedPlanList = centralizedPlanList;
-		this.vehicleList = centralizedPlanList.stream().map(CentralizedPlan::getVehicle).collect(Collectors.toList());
+//		this.vehicleList = centralizedPlanList.stream().map(CentralizedPlan::getVehicle).collect(Collectors.toList());
 //		this.stateCostMap = new HashMap<>();
 	}
 	
 	public double computeCost()
 	{
-		return Helper.zip(centralizedPlanList.stream().map(CentralizedPlan::getVehicle), getPlanList().stream())
-			.map(pair -> pair._1.costPerKm() * pair._2.totalDistance())
+		return centralizedPlanList.stream()
+			.map(centralizedPlan -> centralizedPlan.getVehicle().costPerKm() * centralizedPlan.toPlan().totalDistance())
 			.reduce(Double::sum).get();
 	}
 	
-	public int getChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
+	public int getChangeVehicleNeighbors(Set<Solution> neighbors, PopStrategy popStrategy, Random random)
 	{
 		List<Integer> nonEmptyIndexes = Helper.enumerate(centralizedPlanList)
 			.filter(pair -> !pair._2.isEmpty())
@@ -64,7 +63,11 @@ public class Solution
 					.map(CentralizedPlan::new)
 					.collect(Collectors.toList());
 				
-				Task task = newCentralizedPlanList.get(randomIndex).popRandomTask(random);
+				Task task = popStrategy == PopStrategy.first ?
+					newCentralizedPlanList.get(randomIndex).popFirstTask()
+					:
+					newCentralizedPlanList.get(randomIndex).popRandomTask(random);
+				
 				newCentralizedPlanList.get(j).pushTask(task);
 				neighbors.add(new Solution(newCentralizedPlanList));
 			});
@@ -73,10 +76,10 @@ public class Solution
 	}
 	
 	/** Compute all possible permutations, not feasible */
-	public Set<Solution> chooseAllNeighbors(int shuffleCount, Random random)
+	public Set<Solution> chooseAllNeighbors(int shuffleCount, PopStrategy popStrategy, Random random)
 	{
 		Set<Solution> neighbors = new HashSet<>();
-		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
+		int randomIndex = getChangeVehicleNeighbors(neighbors, popStrategy, random);
 
 		// Add shuffled
 		// Idea: first shuffle pickups, for each permutation loop on all interleaving positions and get all
@@ -138,7 +141,7 @@ public class Solution
 
 					// Discard plan if impossible according to vehicle's capacity and avoid adding derived plans
 					if (carriedTasks.stream().map(task -> task.weight).reduce(0, Integer::sum) >
-						vehicleList.get(randomIndex).capacity())
+						centralizedPlanList.get(randomIndex).getVehicle().capacity())
 					{
 						it.remove();
 						continue;
@@ -149,7 +152,7 @@ public class Solution
 //						lastAction.isDeliver() ? lastAction.getTask().deliveryCity : lastAction.getTask().pickupCity,
 //						carriedTasks, deliveredTasks);
 //
-//					double partialCost = vehicleList.get(randomIndex).costPerKm() *
+//					double partialCost = centralizedPlanList.get(randomIndex).getVehicle().costPerKm() *
 //						new CentralizedPlan(centralizedPlanList.get(randomIndex).getInitialCity(),
 //					                                         partialPlan)
 //							.toPlan().totalDistance();
@@ -181,7 +184,7 @@ public class Solution
 
 			neighbors.addAll(partialPlanList.stream().map(finalPlan -> {
 				List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
-				centralizedPlanList.set(randomIndex, new CentralizedPlan(vehicleList.get(randomIndex), finalPlan));
+				centralizedPlanList.set(randomIndex, new CentralizedPlan(centralizedPlanList.get(randomIndex).getVehicle(), finalPlan));
 				return new Solution(newCentralizedPlanList);
 			}).collect(Collectors.toSet()));
 		}
@@ -193,10 +196,10 @@ public class Solution
 	}
 	
 	/** Compute shuffleCount possible random permutations */
-	public Set<Solution> chooseRandomNeighbors(int shuffleCount, Random random)
+	public Set<Solution> chooseRandomNeighbors(int shuffleCount, PopStrategy popStrategy, Random random)
 	{
 		Set<Solution> neighbors = new HashSet<>();
-		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
+		int randomIndex = getChangeVehicleNeighbors(neighbors, popStrategy, random);
 		
 		// Shuffle
 		
@@ -230,7 +233,7 @@ public class Solution
 				}
 				
 				// Check plan feasibility
-				if (newPlanWeight > vehicleList.get(randomIndex).capacity())
+				if (newPlanWeight > centralizedPlanList.get(randomIndex).getVehicle().capacity())
 				{
 					feasible = false;
 					break;
@@ -240,10 +243,10 @@ public class Solution
 			if (feasible)
 			{
 				List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
-				newCentralizedPlanList.set(randomIndex, new CentralizedPlan(vehicleList.get(randomIndex), newPlan));
+				newCentralizedPlanList.set(randomIndex, new CentralizedPlan(centralizedPlanList.get(randomIndex).getVehicle(), newPlan));
 				neighbors.add(new Solution(newCentralizedPlanList));
+				shuffleIt++;
 			}
-			shuffleIt++;
 		}
 		
 		return neighbors;
@@ -317,19 +320,19 @@ public class Solution
 		return ret;
 	}
 	
-	public Set<Solution> chooseSwapNeighbors(Random random)
+	public Set<Solution> chooseSwapNeighbors(PopStrategy popStrategy, Random random)
 	{
 		Set<Solution> neighbors = new HashSet<>();
-		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
+		int randomIndex = getChangeVehicleNeighbors(neighbors, popStrategy, random);
 
 		for (int pos = 0; pos < centralizedPlanList.get(randomIndex).getLength(); pos++)
 		{
-			Stream.concat(moveLeft(vehicleList.get(randomIndex),
-			                          centralizedPlanList.get(randomIndex).getActionList(),
-			                          pos).stream(),
-			              moveRight(vehicleList.get(randomIndex),
+			Stream.concat(moveLeft(centralizedPlanList.get(randomIndex).getVehicle(),
 			                       centralizedPlanList.get(randomIndex).getActionList(),
-			                       pos).stream())
+			                       pos).stream(),
+			              moveRight(centralizedPlanList.get(randomIndex).getVehicle(),
+			                        centralizedPlanList.get(randomIndex).getActionList(),
+			                        pos).stream())
 				.forEach(plan -> {
 					List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
 					newCentralizedPlanList.set(randomIndex, plan);
@@ -348,14 +351,13 @@ public class Solution
 		if (o == null || getClass() != o.getClass())
 			return false;
 		Solution solution = (Solution) o;
-		return Objects.equals(vehicleList, solution.vehicleList) &&
-			Objects.equals(centralizedPlanList, solution.centralizedPlanList);
+		return Objects.equals(centralizedPlanList, solution.centralizedPlanList);
 	}
 	
 	@Override
 	public int hashCode()
 	{
-		return Objects.hash(vehicleList, centralizedPlanList);
+		return Objects.hash(centralizedPlanList);
 	}
 	
 	@Override
@@ -363,7 +365,6 @@ public class Solution
 	{
 		return "Solution{" +
 			"centralizedPlanList=" + centralizedPlanList +
-			", vehicleList=" + vehicleList +
 			'}';
 	}
 }
