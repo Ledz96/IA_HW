@@ -42,7 +42,7 @@
 		<set pop-strategy="first"/>
 
 		<set iterations="10000"/>
-		<set stuck-limit="1000"/>
+		<set stuck-limit="500"/>
 		<set random-neighbors-count="170"/>
 		<set explore-prob="0.5"/>
 	</agent>
