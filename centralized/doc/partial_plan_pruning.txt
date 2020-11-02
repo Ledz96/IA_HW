@@ -1,0 +1,7 @@
+In order to prune the partial plan list, we want to compare the cost of equivalent partial plans, where equivalent means
+having the same "state" at the same position
+
+State: current city, picked up tasks, delivered tasks
+
+Actually, we can't have the same set of picked up tasks and delivered tasks in two different positions.
+So we leave position out.

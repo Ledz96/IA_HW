@@ -2,7 +2,7 @@
 
 <agents>
 	<!-- A list of agents and their behavior classes -->
-	
+
 	<!-- #### CENTRALIZED AGENTS ### -->
 	<agent name="centralized-naive">
 		<set class-path="bin/"/>
@@ -13,8 +13,23 @@
 	<agent name="centralized-main">
 		<set class-path="bin/"/>
 		<set class-name="template.CentralizedTemplate"/>
+
+		<!-- algorithm: naive, SLS -->
 		<set algorithm="SLS"/>
-		<set epsilon="0.5"/>
+
+		<!-- init-strategy: naive, optimized -->
+		<set init-strategy="optimized"/>
+
+		<!-- neighbors-strategy: random, swap -->
+		<set neighbors-strategy="swap"/>
+
+		<!-- pop-strategy: first, random -->
+		<set pop-strategy="first"/>
+
+		<set iterations="10000"/>
+		<set stuck-limit="500"/>
+		<set random-neighbors-count="170"/>
+		<set explore-prob="0.3"/>
 	</agent>
-	
+
 </agents>
