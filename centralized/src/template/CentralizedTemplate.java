@@ -31,7 +31,7 @@ enum PopStrategy { first, random }
 public class CentralizedTemplate implements CentralizedBehavior
 {
 	enum Algorithm { naive, SLS }
-	enum InitializationStrategy { naive, optimized }
+	enum InitializationStrategy { naive, random_naive, optimized }
 	enum NeighborsStrategy { random, swap }
 	
 	private Topology topology;
@@ -75,9 +75,11 @@ public class CentralizedTemplate implements CentralizedBehavior
 		assert algorithm == Algorithm.naive || algorithm == Algorithm.SLS;
 		
 		// Get initialization strategy
-		String initStrategyName = agent.readProperty("init-strategy", String.class, "optimized");
+		String initStrategyName = agent.readProperty("init-strategy", String.class, "random_naive");
 		initStrategy = InitializationStrategy.valueOf(initStrategyName);
-		assert initStrategy == InitializationStrategy.naive || initStrategy == InitializationStrategy.optimized;
+		assert initStrategy == InitializationStrategy.naive ||
+			initStrategy == InitializationStrategy.random_naive ||
+			initStrategy == InitializationStrategy.optimized;
 		
 		// Get neighbors computation strategy
 		String neighborsStrategyName = agent.readProperty("neighbors-strategy", String.class, "swap");
@@ -189,6 +191,32 @@ public class CentralizedTemplate implements CentralizedBehavior
 		return new Solution(centralizedPlanList);
 	}
 	
+	private Solution selectRandomNaiveInitialSolution(List<Vehicle> vehicleList, TaskSet tasks, Random random)
+	{
+		// Give all tasks to the first vehicle, to be picked up and delivered sequentially
+		// TOCHECK here we assume that all vehicles can pickup any task provided the vehicle's initial capacity
+		
+		List<CentralizedPlan> centralizedPlanList = new ArrayList<>();
+		
+		int randomVehicleIndex = (int) (random.nextDouble() * vehicleList.size());
+		
+		vehicleList.stream().limit(randomVehicleIndex)
+			.forEach(vehicle -> centralizedPlanList.add(new CentralizedPlan(vehicle, new LinkedList<>())));
+		
+		centralizedPlanList.add(new CentralizedPlan(
+			vehicleList.get(randomVehicleIndex),
+			tasks.stream()
+				.flatMap(task -> Stream.of(
+					new CentralizedAction(CentralizedAction.ActionType.PickUp, task),
+					new CentralizedAction(CentralizedAction.ActionType.Deliver, task)))
+				.collect(Collectors.toCollection(LinkedList::new))));
+		
+		vehicleList.stream().skip(randomVehicleIndex + 1)
+			.forEach(vehicle -> centralizedPlanList.add(new CentralizedPlan(vehicle, new LinkedList<>())));
+		
+		return new Solution(centralizedPlanList);
+	}
+	
 	private Solution selectOptimizedInitialSolution(List<Vehicle> vehicleList, TaskSet tasks, Random random)
 	{
 		// For each task to be picked up, get the nearest vehicle. If the vehicle can carry the task assign the latter
@@ -267,12 +295,17 @@ public class CentralizedTemplate implements CentralizedBehavior
 	
 	private Solution slsPlan(List<Vehicle> vehicleList, TaskSet tasks, long startTime)
 	{
-//		Random random = new Random(0);
 		Random random = new Random();
-		Solution solution = initStrategy == InitializationStrategy.naive ?
-			selectNaiveInitialSolution(vehicleList, tasks)
-			:
-			selectOptimizedInitialSolution(vehicleList, tasks, random);
+		
+		Solution solution;
+		
+		if (initStrategy == InitializationStrategy.naive)
+			 solution = selectNaiveInitialSolution(vehicleList, tasks);
+		else if (initStrategy == InitializationStrategy.random_naive)
+			solution = selectRandomNaiveInitialSolution(vehicleList, tasks, random);
+		else
+			solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
+		
 		Solution localMinimum = solution;
 		
 		long maxIterationTime = 0; // higher bound on next iteration time span
@@ -310,10 +343,14 @@ public class CentralizedTemplate implements CentralizedBehavior
 			if (stuck >= STUCK_LIMIT)
 			{
 				System.out.println("reset");
-				solution = initStrategy == InitializationStrategy.naive ?
-					selectNaiveInitialSolution(vehicleList, tasks)
-					:
-					selectOptimizedInitialSolution(vehicleList, tasks, random);
+				
+				if (initStrategy == InitializationStrategy.naive)
+					solution = selectNaiveInitialSolution(vehicleList, tasks);
+				else if (initStrategy == InitializationStrategy.random_naive)
+					solution = selectRandomNaiveInitialSolution(vehicleList, tasks, random);
+				else
+					solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
+				
 				stuck = 0;
 			}
 			
