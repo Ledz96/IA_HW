@@ -32,4 +32,19 @@
 		<set explore-prob="0.5"/>
 	</agent>
 
+	<agent name="centralized-main-fast">
+		<set class-path="bin/"/>
+		<set class-name="template.CentralizedTemplate"/>
+
+		<set algorithm="SLS"/>
+		<set init-strategy="optimized"/>
+		<set neighbors-strategy="swap"/>
+		<set pop-strategy="first"/>
+
+		<set iterations="10000"/>
+		<set stuck-limit="1000"/>
+		<set random-neighbors-count="170"/>
+		<set explore-prob="0.5"/>
+	</agent>
+
 </agents>
