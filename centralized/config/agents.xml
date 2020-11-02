@@ -17,8 +17,8 @@
 		<!-- algorithm: naive, SLS -->
 		<set algorithm="SLS"/>
 
-		<!-- init-strategy: naive, optimized -->
-		<set init-strategy="optimized"/>
+		<!-- init-strategy: naive, random_naive, optimized -->
+		<set init-strategy="random_naive"/>
 
 		<!-- neighbors-strategy: random, swap -->
 		<set neighbors-strategy="swap"/>
@@ -27,9 +27,9 @@
 		<set pop-strategy="first"/>
 
 		<set iterations="10000"/>
-		<set stuck-limit="500"/>
+		<set stuck-limit="1000"/>
 		<set random-neighbors-count="170"/>
-		<set explore-prob="0.3"/>
+		<set explore-prob="0.5"/>
 	</agent>
 
 </agents>

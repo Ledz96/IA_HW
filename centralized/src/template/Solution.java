@@ -13,9 +13,6 @@ public class Solution
 {
 	private final List<CentralizedPlan> centralizedPlanList;
 	
-	// TODO remove?
-//	private final List<Vehicle> vehicleList;
-	
 //	private Map<PartialState, Double> stateCostMap;
 	
 	public List<CentralizedPlan> getCentralizedPlanList()

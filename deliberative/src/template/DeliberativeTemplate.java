@@ -43,6 +43,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	private static AtomicInteger sharedId = new AtomicInteger(0);
 	private int id;
 	
+	private static List<Double> syncList = Collections.synchronizedList(new ArrayList<>(4));
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution td, Agent agent)
 	{
@@ -66,8 +68,13 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		{
 			String heuristicName = agent.readProperty("heuristic", String.class, "H2");
 			heuristic = Heuristic.valueOf(heuristicName.toUpperCase());
-			System.out.printf("Heuristic: %s%n", heuristic);
+//			System.out.printf("Heuristic: %s%n", heuristic);
 		}
+		
+		syncList.add(0.);
+		syncList.add(0.);
+		syncList.add(0.);
+		syncList.add(0.);
 	}
 	
 	@Override
@@ -105,7 +112,14 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			System.exit(0);
 		
 		long elapsedTime = System.currentTimeMillis() - startTime;
-		System.out.printf("[%s] planning time: %dms%n", algorithm, elapsedTime);
+//		System.out.printf("[%s] planning time: %dms%n", algorithm, elapsedTime);
+		
+//		System.out.printf("[%d] [plan] prev distance: %s%n", id, agent.getTotalDistance());
+//		System.out.printf("[%d] [plan] next distance: %s%n", id, plan.totalDistance());
+//		System.out.printf("[%d] [plan] Total cost: %s%n", id, agent.getTotalCost() + vehicle.costPerKm() * plan.totalDistance());
+		
+		syncList.set(id, agent.getTotalCost() + vehicle.costPerKm() * plan.totalDistance());
+		System.out.printf("Total cost: %f%n", syncList.stream().reduce(Double::sum).get());
 		
 		return plan;
 	}
@@ -214,9 +228,9 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 		ActionDeliberative action = finalState.getPreviousChainLink().getValue();
 		action.getPickedUpTasks().forEach(plan::appendPickup);
 		
-		System.out.printf("[%s] State: %s%n", id, previousState);
-		System.out.printf("[%s] Action: %s%n", id, action);
-		action.getPickedUpTasks().forEach(pickedUpTask -> System.out.printf("[%s] pickup: %s%n", id, pickedUpTask));
+//		System.out.printf("[%s] State: %s%n", id, previousState);
+//		System.out.printf("[%s] Action: %s%n", id, action);
+//		action.getPickedUpTasks().forEach(pickedUpTask -> System.out.printf("[%s] pickup: %s%n", id, pickedUpTask));
 		
 		assert finalState.getCurrentCity() == action.getDestination();
 		previousState.getCurrentCity().pathTo(action.getDestination()).forEach(plan::appendMove);
@@ -268,10 +282,10 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 			}
 		}
 
-		System.out.printf("[BFS] iterations: %d%n", iterations);
+//		System.out.printf("[BFS] iterations: %d%n", iterations);
 
 		fillPlan(plan, bestState);
-		System.out.printf("[BFS] min cost: %f%n", vehicle.costPerKm() * plan.totalDistance());
+//		System.out.printf("[BFS] min cost: %f%n", vehicle.costPerKm() * plan.totalDistance());
 		return plan;
 	}
 	
@@ -311,8 +325,8 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 				{
 					if (derivedState.isFinalState())
 					{
-						System.out.printf("[ASTAR] iterations: %d%n", iterations);
-						System.out.printf("[ASTAR] min cost: %f%n", derivedState.getChainCost());
+//						System.out.printf("[ASTAR] iterations: %d%n", iterations);
+//						System.out.printf("[ASTAR] min cost: %f%n", derivedState.getChainCost());
 						
 						fillPlan(plan, derivedState);
 						return plan;
@@ -327,7 +341,7 @@ public class DeliberativeTemplate implements DeliberativeBehavior
 	}
 	
 	@Override
-		public void planCancelled(TaskSet carriedTasks)
+	public void planCancelled(TaskSet carriedTasks)
 	{
 		if (!carriedTasks.isEmpty())
 		{

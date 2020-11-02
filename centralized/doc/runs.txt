@@ -334,7 +334,7 @@ time: 15432
 cost: 15979
 
 
-[Config]                                                                                                                 [BEST]
+[Config]                                                                                                           [first BEST]
     Algorithm: SLS
     Initialization strategy: optimized
     Neighbors strategy: swap
@@ -385,3 +385,82 @@ Average
 time: 6927
 cost: 16537
 
+===============================================================================================================================
+
+[Config]                                                                                                                
+    Algorithm: SLS
+    Initialization strategy: random_naive    <--
+    Neighbors strategy: swap
+    Pop strategy: first
+    Iterations: 10000
+    Stuck limit: 500
+    Random neighbors count: 170
+    Explore probability: 0.5
+
+[SLS] The plan was generated in 151509 milliseconds.
+Total cost: 14768
+[SLS] The plan was generated in 151533 milliseconds.
+Total cost: 15130
+[SLS] The plan was generated in 151528 milliseconds.
+Total cost: 12992
+[SLS] The plan was generated in 151525 milliseconds.
+Total cost: 15130
+[SLS] The plan was generated in 151524 milliseconds.
+Total cost: 13667
+
+Average
+time: 151524
+cost: 14337
+
+
+[Config]                                                                                                                 [BEST]
+    Algorithm: SLS
+    Initialization strategy: random_naive
+    Neighbors strategy: swap
+    Pop strategy: first
+    Iterations: 10000
+    Stuck limit: 1000    <--
+    Random neighbors count: 170
+    Explore probability: 0.5
+
+[SLS] The plan was generated in 151546 milliseconds.
+Total cost: 13652
+[SLS] The plan was generated in 151550 milliseconds.
+Total cost: 13415
+[SLS] The plan was generated in 151559 milliseconds.
+Total cost: 13122
+[SLS] The plan was generated in 151533 milliseconds.
+Total cost: 13577
+[SLS] The plan was generated in 151520 milliseconds.
+Total cost: 12004
+[SLS] The plan was generated in 151508 milliseconds.
+Total cost: 13457
+
+Average
+time: 151536
+cost: 13205
+
+===============================================================================================================================
+===============================================================================================================================
+
+[Comparison]
+10 tasks
+England
+seed: 12345
+4 agents
+
+[Deliberative]
+    Total cost: 15346
+
+[Centralized]
+    [Config]
+        Algorithm: SLS
+        Initialization strategy: random_naive
+        Neighbors strategy: swap
+        Pop strategy: first
+        Iterations: 10000
+        Stuck limit: 1000
+        Random neighbors count: 170
+        Explore probability: 0.5
+    [SLS] The plan was generated in 7621 milliseconds.
+    Total cost: 6778
