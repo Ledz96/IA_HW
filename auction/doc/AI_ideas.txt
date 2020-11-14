@@ -1,0 +1,27 @@
+Possible strategy: compute best path if task is accepted. Then, if new steps are added (i.e.: if we deviating our path), compute probability that in the cities in between we can pick up something good (task with very low marginal cost)
+
+If I have to deliver to a faraway location with little to no opportunities in between, I want marginal cost (to get there) + cost for the way back + some profit
+
+
+
+
+MarginalCost == 0 case:
+
+- if marginalCost == 0, then you can compute the bid as something less than:
+    - min(min(history(bids))), considering all bids in history
+    - min(min(sliding_window(bids))), considering only some recent bids
+    - avg(min(sliding_min(bids))), considering only some recent bids
+    
+
+Factors to consider when MarginalCost != 0:
+    Try to stay below:
+        - avg(min(sliding_window(bids)))
+        - min(min(sliding_window(bids)))
+    If movement leads to new city (either pickup or delivery, doesn't matter):
+        - if new city is disconnected (connected to few cities or far from connections) ask for higher pay
+    If movement leads to very connected city, from further away city:
+        - ask for the bare minimum, even at loss
+
+
+TOEVAL: according to the task generation distribution, it may be wise to consider near future task as improbable to be the same
+as past tasks auctioned?
