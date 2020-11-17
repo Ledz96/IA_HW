@@ -1,0 +1,96 @@
+[GB, 3 agents, 30 tasks]
+
+[BEST fast]
+
+[SLS] The plan was generated in 24883 milliseconds.
+Total cost: 14166
+[SLS] The plan was generated in 21369 milliseconds.
+Total cost: 14861
+[SLS] The plan was generated in 22006 milliseconds.
+Total cost: 14936
+[SLS] The plan was generated in 20758 milliseconds.
+Total cost: 15078
+[SLS] The plan was generated in 19880 milliseconds.
+Total cost: 13704
+
+Average
+time: 21779
+cost: 14549
+
+===============================================================================================================================
+
+[GB, 4 agents, 10 tasks]
+
+[BEST fast]
+
+[SLS] The plan was generated in 1186 milliseconds.
+Total cost: 8270
+[SLS] The plan was generated in 1233 milliseconds.
+Total cost: 8270
+[SLS] The plan was generated in 1178 milliseconds.
+Total cost: 8270
+[SLS] The plan was generated in 1205 milliseconds.
+Total cost: 8270
+[SLS] The plan was generated in 1195 milliseconds.
+Total cost: 8270
+
+Average
+time: 1199
+cost: 8270
+
+===============================================================================================================================
+
+[GB, 4 agents, 20 tasks]
+
+[BEST fast]
+
+[SLS] The plan was generated in 5267 milliseconds.
+Total cost: 13720
+[SLS] The plan was generated in 5056 milliseconds.
+Total cost: 12981
+[SLS] The plan was generated in 5019 milliseconds.
+Total cost: 13175
+[SLS] The plan was generated in 5106 milliseconds.
+Total cost: 12606
+[SLS] The plan was generated in 4759 milliseconds.
+Total cost: 13005
+
+Average
+time: 5041
+cost: 13097
+
+===============================================================================================================================
+
+[GB, 2 agents, 30 tasks]
+
+[SLS] The plan was generated in 59699 milliseconds.
+Total cost: 14721
+[SLS] The plan was generated in 64643 milliseconds.
+Total cost: 14865
+[SLS] The plan was generated in 65826 milliseconds.
+Total cost: 14343
+[SLS] The plan was generated in 59672 milliseconds.
+Total cost: 15037
+[SLS] The plan was generated in 61510 milliseconds.
+Total cost: 14339
+
+Average
+time: 62270
+cost: 14661
+
+===============================================================================================================================
+
+[GB, 1 agent, 30 tasks, random neighbors]
+
+[SLS] The plan was generated in 63252 milliseconds.
+Total cost: 41153
+[SLS] The plan was generated in 66344 milliseconds.
+Total cost: 43774
+[SLS] The plan was generated in 64473 milliseconds.
+Total cost: 44085
+[SLS] The plan was generated in 63929 milliseconds.
+Total cost: 44130
+
+Average
+time: 64500
+cost: 43286
