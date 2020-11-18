@@ -10,7 +10,7 @@ MarginalCost == 0 case:
 - if marginalCost == 0, then you can compute the bid as something less than:
     - min(min(history(bids))), considering all bids in history
     - min(min(sliding_window(bids))), considering only some recent bids
-    - avg(min(sliding_min(bids))), considering only some recent bids
+    - avg(min(sliding_window(bids))), considering only some recent bids
     
 
 Factors to consider when MarginalCost != 0:
@@ -25,3 +25,15 @@ Factors to consider when MarginalCost != 0:
 
 TOEVAL: according to the task generation distribution, it may be wise to consider near future task as improbable to be the same
 as past tasks auctioned?
+
+
+-)	Adversarial: save the task assignment history for all agents and consider them as clone adversaries: predict their plan
+	with the same computation as ourselves, estimate their marginal cost based on that and bid lower. This may also be made
+	adaptable by simply computing the average difference between the estimated marginal and the adversary bids, or even better
+	by fully considering them a clone and thus trying to learn the weights of all the source of information we use (e.g.
+	topology-based considerations).
+	Time allocated for calculating the estimated adversarial best plan may the N-th fraction of the time available for the
+	testing, with N the number of agents for which to compute the plan.
+	What about the first few rounds? Since we can't compute other's plan, we should adopt another strategy. A simple one would
+	be just not to bid high so that in the "worst" case we're getting a gain, in the "best" we're letting the other take the
+	tasks so that we can then switch to the adversarial strategy.
