@@ -1,19 +1,18 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import logist.simulation.Vehicle;
 import logist.task.Task;
-import logist.task.TaskSet;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class Centralized
+public class CentralizedSolver
 {
-	private static final long timeout_plan = 60 * 1000;
-//	private static final int N_ITER = 10000;
-	private static final int N_ITER = 1000;
+	private static final int N_ITER = 10000;
+//	private static final int N_ITER = 1000;
 	private static final int STUCK_LIMIT = 1000;
+//	private static final int STUCK_LIMIT = 100;
 	private static final double exploreProb = 0.5;
 	
 	private static Solution selectOptimizedInitialSolution(List<Vehicle> vehicleList, Set<Task> tasks, Random random)
@@ -91,13 +90,15 @@ public class Centralized
 			.get();
 	}
 	
-	public static Solution slsPlan(List<Vehicle> vehicleList, Set<Task> tasks, long startTime)
+	public static Solution slsSearch(Solution initialSolution,
+	                                 long timeout,
+	                                 long startTime,
+	                                 Random random)
 	{
-		Random random = new Random();
-		
-		Solution solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
-		
+		Solution solution = initialSolution;
 		Solution localMinimum = solution;
+		
+		Set<CentralizedPlan> visitedNeighbors = new HashSet<>();
 		
 		long maxIterationTime = 0; // higher bound on next iteration time span
 		int iter = 0;
@@ -106,7 +107,7 @@ public class Centralized
 		long beforeIterationTime = System.currentTimeMillis();
 		while (iter < N_ITER)
 		{
-			if (System.currentTimeMillis() - startTime + maxIterationTime > timeout_plan)
+			if (System.currentTimeMillis() - startTime + 1.1 * maxIterationTime > timeout)
 			{
 				System.out.println("Reached timeout, returning best solution found");
 				break;
@@ -114,7 +115,7 @@ public class Centralized
 			
 			if (random.nextDouble() < exploreProb)
 			{
-				solution = localChoice(solution.chooseSwapNeighbors(random));
+				solution = localChoice(solution.chooseSwapNeighbors(random, visitedNeighbors));
 			}
 			
 			if (solution.computeCost() < localMinimum.computeCost())
@@ -129,10 +130,11 @@ public class Centralized
 			
 			if (stuck >= STUCK_LIMIT)
 			{
-//				System.out.println("reset");
-				solution = selectOptimizedInitialSolution(vehicleList, tasks, random);
-				
+				solution = initialSolution;
 				stuck = 0;
+				
+				// TOEVAL better with than without
+				visitedNeighbors = new HashSet<>();
 			}
 			
 			maxIterationTime = Math.max(maxIterationTime, System.currentTimeMillis() - beforeIterationTime);
@@ -140,5 +142,41 @@ public class Centralized
 		}
 		
 		return solution.computeCost() < localMinimum.computeCost() ? solution : localMinimum;
+	}
+	
+	public static Solution slsSearch(List<Vehicle> vehicleList,
+	                                 Set<Task> tasks,
+	                                 long timeout,
+	                                 long startTime,
+	                                 Random random)
+	{
+		return slsSearch(selectOptimizedInitialSolution(vehicleList, tasks, random),
+		                 timeout, startTime, random);
+	}
+	
+	public static Solution addTaskAndSearch(Solution solution, Task task)
+	{
+		Set<Solution> neighbors = new HashSet<>();
+		
+		for (int planIdx = 0; planIdx < solution.getCentralizedPlanList().size(); planIdx++)
+		{
+			CentralizedPlan plan = solution.getCentralizedPlanList().get(planIdx);
+			
+			for (int insertionIndex: plan.getInsertPositions(task))
+			{
+				CentralizedPlan newPlan = new CentralizedPlan(plan);
+				newPlan.insertTask(task, insertionIndex);
+				
+				List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(solution.getCentralizedPlanList());
+				newCentralizedPlanList.set(planIdx, newPlan);
+				
+				Solution newSolution = new Solution(newCentralizedPlanList);
+				neighbors.add(newSolution);
+				
+				neighbors.addAll(newSolution.computeSwapNeighbors(planIdx));
+			}
+		}
+		
+		return neighbors.stream().min(Comparator.comparingLong(Solution::computeCost)).get();
 	}
 }
