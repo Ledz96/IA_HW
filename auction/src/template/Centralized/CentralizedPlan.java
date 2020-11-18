@@ -1,4 +1,4 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
@@ -12,8 +12,7 @@ public class CentralizedPlan
 {
 	private final Vehicle vehicle;
 	private final List<CentralizedAction> actionList;
-	
-	private int residualCapacity;
+	private List<Integer> residuals;
 	
 	public Vehicle getVehicle()
 	{
@@ -25,16 +24,13 @@ public class CentralizedPlan
 		return actionList;
 	}
 	
-	public int getResidualCapacity()
-	{
-		return residualCapacity;
-	}
-	
 	public CentralizedPlan(Vehicle vehicle, List<CentralizedAction> actionList) throws ExceededCapacityException
 	{
 		this.vehicle = vehicle;
 		this.actionList = new ArrayList<>();
-		this.residualCapacity = vehicle.capacity();
+		
+		this.residuals = new ArrayList<>();
+		this.residuals.add(vehicle.capacity());
 		
 		actionList.forEach(action -> {
 			if (!addAction(action))
@@ -45,11 +41,14 @@ public class CentralizedPlan
 	public CentralizedPlan(CentralizedPlan plan) throws RuntimeException
 	{
 		this(plan.getVehicle(), plan.getActionList());
+		this.residuals = new ArrayList<>(plan.residuals);
 	}
 	
 	public boolean addAction(CentralizedAction centralizedAction)
 	{
 		Task task = centralizedAction.getTask();
+		int residualCapacity = residuals.get(residuals.size() - 1);
+		
 		if (centralizedAction.isPickup())
 		{
 			if (task.weight > residualCapacity)
@@ -66,6 +65,7 @@ public class CentralizedPlan
 		}
 		
 		actionList.add(centralizedAction);
+		residuals.add(residualCapacity);
 		return true;
 	}
 	
@@ -87,6 +87,7 @@ public class CentralizedPlan
 	{
 		if (isEmpty())
 			return vehicle.homeCity();
+		
 		CentralizedAction lastAction = actionList.get(actionList.size() - 1);
 		Task lastTask = lastAction.getTask();
 		return lastAction.isPickup() ? lastTask.pickupCity : lastTask.deliveryCity;
@@ -95,6 +96,44 @@ public class CentralizedPlan
 	public int getLength()
 	{
 		return actionList.size();
+	}
+	
+	// TODO remove
+//	public List<Integer> computeResiduals()
+//	{
+//		List<Integer> residuals = new ArrayList<>(actionList.size() + 1);
+//		int residual = vehicle.capacity();
+//
+//		residuals.add(residual);
+//		for (CentralizedAction action: actionList)
+//		{
+//			residual += (action.isPickup() ? -1 : 1) * action.getTask().weight;
+//			residuals.add(residual);
+//		}
+//
+//		return residuals;
+//	}
+	
+	public List<Integer> getInsertPositions(Task task)
+	{
+		return Helper.enumerate(residuals)
+			.filter(pair -> task.weight <= pair._2)
+			.map(Pair::_1)
+			.collect(Collectors.toList());
+	}
+	
+	public boolean insertTask(Task task, int index)
+	{
+		if (task.weight > residuals.get(index))
+			return false;
+		
+		actionList.add(index, new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+		residuals.add(index + 1, residuals.get(index));
+		
+		actionList.add(index, new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
+		residuals.add(index + 1, residuals.get(index) - task.weight);
+		
+		return true;
 	}
 	
 	public boolean isComplete()
@@ -109,22 +148,35 @@ public class CentralizedPlan
 	
 	public boolean pushTask(Task task)
 	{
-		if (task.weight > vehicle.capacity())
-			return false;
+		return insertTask(task, actionList.size());
+	}
+	
+	public boolean pushTaskInRandomPosition(Task task, Random random)
+	{
+		List<Pair<Integer, Integer>> filteredIndexedResiduals = Helper.enumerate(residuals).filter(pair -> task.weight <= pair._2).collect(Collectors.toList());
+		int index = filteredIndexedResiduals.get((int) random.nextDouble() * filteredIndexedResiduals.size())._1;
 		
-		actionList.add(0, new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
-		actionList.add(0, new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
-		// No change needed to residualCapacity
-		return true;
+		return insertTask(task, index);
 	}
 	
 	private Task popTask(Task task)
 	{
-		assert actionList.remove(new CentralizedAction(CentralizedAction.ActionType.PickUp, task));
-		boolean hadDeliver =  actionList.remove(new CentralizedAction(CentralizedAction.ActionType.Deliver, task));
+		CentralizedAction pickupAction = new CentralizedAction(CentralizedAction.ActionType.PickUp, task);
+		CentralizedAction deliverAction = new CentralizedAction(CentralizedAction.ActionType.Deliver, task);
 		
-		if (!hadDeliver)
-			residualCapacity += task.weight;
+		int pickupActionResidualIdx = actionList.indexOf(pickupAction) + 1;
+		int deliverActionResidualIdx = actionList.indexOf(deliverAction) + 1;
+		
+		assert actionList.remove(pickupAction);
+		assert actionList.remove(deliverAction);
+		
+		for (int i = pickupActionResidualIdx; i < deliverActionResidualIdx; i++)
+		{
+			residuals.set(i, residuals.get(i) + pickupAction.getTask().weight);
+		}
+		
+		residuals.remove(deliverActionResidualIdx);
+		residuals.remove(pickupActionResidualIdx);
 		
 		return task;
 	}
@@ -140,9 +192,10 @@ public class CentralizedPlan
 	public Task popRandomTask(Random random)
 	{
 		List<CentralizedAction> pickupList = actionList.stream().filter(CentralizedAction::isPickup).collect(Collectors.toList());
-		Task randomPickupTask = pickupList.stream().skip(random.nextInt(pickupList.size())).findFirst().get().getTask();
-
-		return popTask(randomPickupTask);
+		int randomIdx = random.nextInt(pickupList.size());
+		CentralizedAction randomPickupAction = pickupList.stream().skip(randomIdx).findFirst().get();
+		
+		return popTask(randomPickupAction.getTask());
 	}
 	
 	public Plan toPlan() throws RuntimeException
@@ -174,12 +227,29 @@ public class CentralizedPlan
 	}
 	
 	@Override
+	public boolean equals(Object o)
+	{
+		if (this == o)
+			return true;
+		if (o == null || getClass() != o.getClass())
+			return false;
+		CentralizedPlan that = (CentralizedPlan) o;
+		return Objects.equals(vehicle, that.vehicle) &&
+			Objects.equals(actionList, that.actionList);
+	}
+	
+	@Override
+	public int hashCode()
+	{
+		return Objects.hash(vehicle, actionList);
+	}
+	
+	@Override
 	public String toString()
 	{
 		return "CentralizedPlan{" +
 			"vehicle=" + vehicle +
 			", actionList=" + actionList +
-			", residualCapacity=" + residualCapacity +
 			'}';
 	}
 }
