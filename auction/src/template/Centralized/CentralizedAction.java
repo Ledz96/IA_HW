@@ -1,4 +1,4 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import logist.task.Task;
 

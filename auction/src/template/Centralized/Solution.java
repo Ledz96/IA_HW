@@ -1,4 +1,4 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
@@ -30,39 +30,11 @@ public class Solution
 		this.centralizedPlanList = centralizedPlanList;
 	}
 	
-	public double computeCost()
+	public long computeCost()
 	{
 		return centralizedPlanList.stream()
 			.map(centralizedPlan -> centralizedPlan.getVehicle().costPerKm() * centralizedPlan.toPlan().totalDistance())
-			.reduce(Double::sum).get();
-	}
-	
-	public int getChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
-	{
-		List<Integer> nonEmptyIndexes = Helper.enumerate(centralizedPlanList)
-			.filter(pair -> !pair._2.isEmpty())
-			.map(Pair::_1)
-			.collect(Collectors.toList());
-		
-		int randomIndex = nonEmptyIndexes.stream()
-			.skip(new Double(random.nextDouble() * nonEmptyIndexes.size()).longValue())
-			.findFirst().get();
-		
-		// TOCHECK here we assume that all vehicles can pickup any task provided the vehicle's initial capacity
-		IntStream.range(0, centralizedPlanList.size())
-			.filter(j -> j != randomIndex)
-			.forEach(j -> {
-				List<CentralizedPlan> newCentralizedPlanList = centralizedPlanList.stream()
-					.map(CentralizedPlan::new)
-					.collect(Collectors.toList());
-				
-				Task task = newCentralizedPlanList.get(randomIndex).popFirstTask();
-				
-				newCentralizedPlanList.get(j).pushTask(task);
-				neighbors.add(new Solution(newCentralizedPlanList));
-			});
-		
-		return randomIndex;
+			.reduce(Double::sum).get().longValue();
 	}
 	
 	private Set<CentralizedPlan> moveLeft(Vehicle vehicle, List<CentralizedAction> actionList, int pos)
@@ -133,24 +105,72 @@ public class Solution
 		return ret;
 	}
 	
-	public Set<Solution> chooseSwapNeighbors(Random random)
+	// Reminder: do not use visitedNeighbors here
+	public Set<Solution> computeSwapNeighbors(int planIdx)
+	{
+		Set<Solution> neighbors = new HashSet<>();
+		CentralizedPlan centralizedPlan = centralizedPlanList.get(planIdx);
+		
+		for (int pos = 0; pos < centralizedPlan.getLength(); pos++)
+		{
+			Stream.concat(moveLeft(centralizedPlan.getVehicle(), centralizedPlan.getActionList(), pos).stream(),
+			              moveRight(centralizedPlan.getVehicle(), centralizedPlan.getActionList(), pos).stream())
+				.forEach(plan -> {
+					List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
+					newCentralizedPlanList.set(planIdx, plan);
+					
+					neighbors.add(new Solution(newCentralizedPlanList));
+				});
+		}
+		
+		return neighbors;
+	}
+	
+	private int getChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
+	{
+		List<Integer> nonEmptyIndexes = Helper.enumerate(centralizedPlanList)
+			.filter(pair -> !pair._2.isEmpty())
+			.map(Pair::_1)
+			.collect(Collectors.toList());
+		
+		int randomIndex = nonEmptyIndexes.stream()
+			.skip(new Double(random.nextDouble() * nonEmptyIndexes.size()).longValue())
+			.findFirst().get();
+		
+		// TOCHECK here we assume that all vehicles can pickup any task provided the vehicle's initial capacity
+		IntStream.range(0, centralizedPlanList.size())
+			.filter(j -> j != randomIndex)
+			.forEach(j -> {
+				List<CentralizedPlan> newCentralizedPlanList = centralizedPlanList.stream()
+					.map(CentralizedPlan::new)
+					.collect(Collectors.toList());
+				
+				// TOEVAL popRandom best
+//				Task task = newCentralizedPlanList.get(randomIndex).popFirstTask();
+				Task task = newCentralizedPlanList.get(randomIndex).popRandomTask(random);
+				
+				// TOEVAL pushTask best
+				newCentralizedPlanList.get(j).pushTask(task);
+//				newCentralizedPlanList.get(j).pushTaskInRandomPosition(task, random);
+				
+				neighbors.add(new Solution(newCentralizedPlanList));
+			});
+		
+		return randomIndex;
+	}
+	
+	public Set<Solution> chooseSwapNeighbors(Random random, Set<CentralizedPlan> visitedNeighbors)
 	{
 		Set<Solution> neighbors = new HashSet<>();
 		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
-
-		for (int pos = 0; pos < centralizedPlanList.get(randomIndex).getLength(); pos++)
+		CentralizedPlan randomCentralizedPlan = centralizedPlanList.get(randomIndex);
+		
+		// TOEVAL visitedNeighbors best
+		if (!visitedNeighbors.contains(randomCentralizedPlan))
+//		if (true)
 		{
-			Stream.concat(moveLeft(centralizedPlanList.get(randomIndex).getVehicle(),
-			                       centralizedPlanList.get(randomIndex).getActionList(),
-			                       pos).stream(),
-			              moveRight(centralizedPlanList.get(randomIndex).getVehicle(),
-			                        centralizedPlanList.get(randomIndex).getActionList(),
-			                        pos).stream())
-				.forEach(plan -> {
-					List<CentralizedPlan> newCentralizedPlanList = new ArrayList<>(centralizedPlanList);
-					newCentralizedPlanList.set(randomIndex, plan);
-					neighbors.add(new Solution(newCentralizedPlanList));
-				});
+			neighbors.addAll(computeSwapNeighbors(randomIndex));
+			visitedNeighbors.add(randomCentralizedPlan);
 		}
 		
 		return neighbors;

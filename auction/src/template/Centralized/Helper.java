@@ -1,4 +1,4 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,11 +11,6 @@ public class Helper
 	{
 		Iterator<T2> rightIterator = rightStream.iterator();
 		return leftStream.map(left -> new Pair<>(left, rightIterator.next()));
-	}
-	
-	public static <T1,T2> Stream<Pair<T1,T2>> zip(Collection<T1> leftCollection, Collection<T2> rightCollection)
-	{
-		return zip(leftCollection.stream(), rightCollection.stream());
 	}
 	
 	public static <T> Stream<Pair<Integer, T>> enumerate(Collection<T> collection)
