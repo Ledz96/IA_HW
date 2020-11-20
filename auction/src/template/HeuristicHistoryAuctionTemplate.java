@@ -18,14 +18,6 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 {
-	// additive advantage factors
-	private static final Double ADD_ADV_POS_F = 0.6;
-	private static final Double ADD_ADV_NEG_F = 0.2;
-	
-	// additive disadvantage factors
-	private static final Double ADD_DIS_POS_F = 0.6;
-	private static final Double ADD_DIS_NEG_F = 0.1;
-	
 	// multiplicative advantage factors
 	private static final Double MUL_ADV_POS_F = 0.2;
 	private static final Double MUL_ADV_NEG_F = 0.2;
@@ -63,10 +55,7 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 	private Long lastMarginalCost;
 	private Long totalRevenue = 0L;
 	
-	private Double additivePositiveAttenuatingFactor;
-	private Double additiveNegativeAttenuatingFactor;
 	private WeightFlag weightFlag;
-	
 	private Double multiplicativePositiveAttenuatingFactor;
 	private Double multiplicativeNegativeAttenuatingFactor;
 	
@@ -94,17 +83,11 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 		
 		if (agent.id() == 0) // advantage
 		{
-			additivePositiveAttenuatingFactor = ADD_ADV_POS_F;
-			additiveNegativeAttenuatingFactor = ADD_ADV_NEG_F;
-			
 			multiplicativePositiveAttenuatingFactor = MUL_ADV_POS_F;
 			multiplicativeNegativeAttenuatingFactor = MUL_ADV_NEG_F;
 		}
 		else // disadvantage
 		{
-			additivePositiveAttenuatingFactor = ADD_DIS_POS_F;
-			additiveNegativeAttenuatingFactor = ADD_DIS_NEG_F;
-			
 			multiplicativePositiveAttenuatingFactor = MUL_DIS_POS_F;
 			multiplicativeNegativeAttenuatingFactor = MUL_DIS_NEG_F;
 		}
@@ -193,28 +176,16 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 			totalRevenue += bids[agent.id()];
 			
 			if (weightFlag == WeightFlag.Pos)
-			{
-				additivePositiveAttenuatingFactor *= MUL_F;
 				multiplicativePositiveAttenuatingFactor *= MUL_F;
-			}
 			else if (weightFlag == WeightFlag.Neg)
-			{
-				additiveNegativeAttenuatingFactor /= MUL_F;
 				multiplicativeNegativeAttenuatingFactor /= MUL_F;
-			}
 		}
 		else
 		{
 			if (weightFlag == WeightFlag.Pos)
-			{
-				additivePositiveAttenuatingFactor /= MUL_F;
 				multiplicativePositiveAttenuatingFactor /= MUL_F;
-			}
 			else if(weightFlag == WeightFlag.Neg)
-			{
-				additiveNegativeAttenuatingFactor *= MUL_F;
 				multiplicativeNegativeAttenuatingFactor *= MUL_F;
-			}
 		}
 	}
 	
@@ -288,22 +259,6 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 					.map(city -> cityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
 				double normalizedAvgCityWeight = newVisitedCities.stream()
 					.map(city -> normalizedCityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
-				
-				// additive
-				
-				double additiveFactor;
-				if (avgCityWeight > 0)
-				{
-					weightFlag = WeightFlag.Pos;
-					additiveFactor = additivePositiveAttenuatingFactor * avgCityWeight;
-				}
-				else
-				{
-					weightFlag = WeightFlag.Neg;
-					additiveFactor = additiveNegativeAttenuatingFactor * avgCityWeight;
-				}
-
-//				targetBid += additiveFactor;
 				
 				// multiplicative
 				
