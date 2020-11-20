@@ -1,0 +1,77 @@
+=== Adaptive multiplicative ===
+
+MUL_ADV_POS_F = 0.4
+MUL_ADV_NEG_F = 0.2
+MUL_DIS_POS_F = 0.4
+MUL_DIS_NEG_F = 0.1
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 8994
+[Heuristic] gain: 11517
+[Safe] adaptedFinalSolution cost: 6746
+[Safe] gain: 8398
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5504
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 3359
+
+
+[Heuristic] total gain: 14,876
+[Safe] total gain: 13,902
+ratio: 1.0700618616026471011365271184002
+
+
+
+MUL_ADV_POS_F = 0.6
+MUL_ADV_NEG_F = 0.2
+MUL_DIS_POS_F = 0.6
+MUL_DIS_NEG_F = 0.1
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 8295
+[Heuristic] gain: 13627
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 8752
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] gain: 19303
+[Heuristic] adaptedFinalSolution cost: 7596
+[Heuristic] gain: 13539
+
+
+[Heuristic] total gain: 27,166
+[Safe] total gain: 28,055
+ratio: 0.96831224380680805560506148636607
+
+
+
+MUL_ADV_POS_F = 0.2
+MUL_ADV_NEG_F = 0.2
+MUL_DIS_POS_F = 0.2
+MUL_DIS_NEG_F = 0.1
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 8295
+[Heuristic] gain: 13627
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 8752
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5495
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 3164
+
+
+[Heuristic] total gain: 16,791
+[Safe] total gain: 14,247
+ratio: 1.1785639081911981469783112234155

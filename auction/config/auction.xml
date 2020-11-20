@@ -13,13 +13,16 @@
 	<agents import="config/agents.xml" />
 	
 	<!-- define task distribution -->
-	<tasks number="20" rngSeed="123456">
+<!--	<tasks number="20" rngSeed="123456">-->
+<!--	<tasks number="30" rngSeed="123456">-->
+	<tasks number="30" rngSeed="123456">
 		<!--
 			the probabilities, rewards and weight of tasks
 		-->
 		<probability distribution="uniform" min="0.0" max="1.0" />
 		<reward distribution="constant" policy="short-distances" min="100" max="99999" />
 		<weight distribution="constant" value="3" />
+<!--		<weight distribution="constant" value="15" />-->
 
 	</tasks>
 	
@@ -40,6 +43,22 @@
 			<vehicle name="Vehicle 2">
 				<set color="#ff0000" />
 				<set home="London" />
+				<set speed="90" />
+				<set capacity="30" />
+				<set cost-per-km="5" />
+			</vehicle>
+
+			<vehicle name="Vehicle 3">
+				<set color="#0000ff" />
+				<set home="Sheffield" />
+				<set speed="90" />
+				<set capacity="30" />
+				<set cost-per-km="5" />
+			</vehicle>
+
+			<vehicle name="Vehicle 4">
+				<set color="#0000ff" />
+				<set home="Plymouth" />
 				<set speed="90" />
 				<set capacity="30" />
 				<set cost-per-km="5" />

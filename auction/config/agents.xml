@@ -9,9 +9,19 @@
 		<set class-name="template.NaiveRandomAuctionTemplate"/>
 	</agent>
 
-	<agent name="auction-centralized">
+	<agent name="auction-baseline">
 		<set class-path="bin/"/>
 		<set class-name="template.BaselineAuctionTemplate"/>
+	</agent>
+
+	<agent name="auction-safe">
+		<set class-path="bin/"/>
+		<set class-name="template.SafeHistoryAuctionTemplate"/>
+	</agent>
+
+	<agent name="auction-heuristic">
+		<set class-path="bin/"/>
+		<set class-name="template.HeuristicHistoryAuctionTemplate"/>
 	</agent>
 	
 </agents>

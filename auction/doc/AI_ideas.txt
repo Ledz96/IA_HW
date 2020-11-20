@@ -10,18 +10,45 @@ MarginalCost == 0 case:
 - if marginalCost == 0, then you can compute the bid as something less than:
     - min(min(history(bids))), considering all bids in history
     - min(min(sliding_window(bids))), considering only some recent bids
-    - avg(min(sliding_min(bids))), considering only some recent bids
+    - avg(min(sliding_window(bids))), considering only some recent bids
     
 
 Factors to consider when MarginalCost != 0:
     Try to stay below:
         - avg(min(sliding_window(bids)))
         - min(min(sliding_window(bids)))
+		- TOEVAL: start with avg(min), if for 3/4 consecutive turns we have not yet taken any task, we switch to min(min)
     If movement leads to new city (either pickup or delivery, doesn't matter):
         - if new city is disconnected (connected to few cities or far from connections) ask for higher pay
     If movement leads to very connected city, from further away city:
         - ask for the bare minimum, even at loss
 
 
+What we need:
+	- normalized distances between all cities (lower than average: good)
+		- remove outliers from avg distance for weight calculation
+		How to use:
+			- add non-normalized values to the target bid multiplied by a factor (e.g. 0.5/0.75)
+			- add to the target bid itself multiplied by both the normalized value and a factor
+	- distribution of tasks that allow a marginal cost 0 compared to the solution in case we pick up the current task.
+	- destination distribution:
+	How to use:
+		favour cities with high probability of a task to a near city
+
 TOEVAL: according to the task generation distribution, it may be wise to consider near future task as improbable to be the same
 as past tasks auctioned?
+
+
+
+
+
+-)	Adversarial: save the task assignment history for all agents and consider them as clone adversaries: predict their plan
+	with the same computation as ourselves, estimate their marginal cost based on that and bid lower. This may also be made
+	adaptable by simply computing the average difference between the estimated marginal and the adversary bids, or even better
+	by fully considering them a clone and thus trying to learn the weights of all the source of information we use (e.g.
+	topology-based considerations).
+	Time allocated for calculating the estimated adversarial best plan may the N-th fraction of the time available for the
+	testing, with N the number of agents for which to compute the plan.
+	What about the first few rounds? Since we can't compute other's plan, we should adopt another strategy. A simple one would
+	be just not to bid high so that in the "worst" case we're getting a gain, in the "best" we're letting the other take the
+	tasks so that we can then switch to the adversarial strategy.

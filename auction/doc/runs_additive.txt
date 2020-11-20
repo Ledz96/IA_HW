@@ -1,0 +1,157 @@
+===============================================================================================================================
+
+[Advantage situation]
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.4
+additiveNegativeAttenuatingFactor = 0.2
+
+[Heuristic] adaptedFinalSolution cost: 10553
+[Heuristic] totalRevenue: 22939
+[Heuristic] gain: 12386
+[Safe] adaptedFinalSolution cost: 5148
+[Safe] totalRevenue: 9965
+[Safe] gain: 4817
+
+gain/cost
+1.1736946839761205344451814649863
+0.93570318570318570318570318570319
+ratio
+1.2543450764187395705467706418413
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.8
+additiveNegativeAttenuatingFactor = 0.1
+
+[Heuristic] adaptedFinalSolution cost: 7966
+[Heuristic] totalRevenue: 16873
+[Heuristic] gain: 8907
+[Safe] adaptedFinalSolution cost: 8315
+[Safe] totalRevenue: 15526
+[Safe] gain: 7211
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.1
+
+[Heuristic] adaptedFinalSolution cost: 10621
+[Heuristic] totalRevenue: 22328
+[Heuristic] gain: 11707
+[Safe] adaptedFinalSolution cost: 5896
+[Safe] totalRevenue: 10763
+[Safe] gain: 4867
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.2
+
+[Heuristic] adaptedFinalSolution cost: 9903
+[Heuristic] totalRevenue: 20562
+[Heuristic] gain: 10659
+[Safe] adaptedFinalSolution cost: 6374
+[Safe] totalRevenue: 11204
+[Safe] gain: 4830
+
+gain/cost
+1.0763405028779157830960315056044
+0.75776592406652023846877941637904
+ratio
+1.4204129120794689858083032746837
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.1
+
+[Heuristic] adaptedFinalSolution cost: 8045
+[Heuristic] totalRevenue: 14311
+[Heuristic] gain: 6266
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] totalRevenue: 17841
+[Safe] gain: 9260
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.8
+additiveNegativeAttenuatingFactor = 0.2
+
+[Heuristic] adaptedFinalSolution cost: 9830
+[Heuristic] totalRevenue: 21975
+[Heuristic] gain: 12145
+[Safe] adaptedFinalSolution cost: 5148
+[Safe] totalRevenue: 10070
+[Safe] gain: 4922
+
+gain/cost
+1.235503560528992878942014242116
+0.95609945609945609945609945609946
+ratio
+1.2922333054862363553013996989868
+
+===============================================================================================================================
+
+[Disadvantage situation]
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.2
+
+[Safe] adaptedFinalSolution cost: 7808
+[Safe] totalRevenue: 13528
+[Safe] gain: 5720
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] totalRevenue: 8521
+[Heuristic] gain: 2724
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.8
+additiveNegativeAttenuatingFactor = 0.2
+
+[Safe] adaptedFinalSolution cost: 7875
+[Safe] totalRevenue: 14178
+[Safe] gain: 6303
+[Heuristic] adaptedFinalSolution cost: 6782
+[Heuristic] totalRevenue: 9258
+[Heuristic] gain: 2476
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.1
+
+[Safe] adaptedFinalSolution cost: 7218
+[Safe] totalRevenue: 13299
+[Safe] gain: 6081
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] totalRevenue: 9263
+[Heuristic] gain: 3466
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 0.8
+additiveNegativeAttenuatingFactor = 0.1
+
+[Safe] adaptedFinalSolution cost: 7218
+[Safe] totalRevenue: 13299
+[Safe] gain: 6081
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] totalRevenue: 9280
+[Heuristic] gain: 3483
+
+===============================================================================================================================
+
+additivePositiveAttenuatingFactor = 1.5
+additiveNegativeAttenuatingFactor = 0.1
+
+[Safe] adaptedFinalSolution cost: 7218
+[Safe] totalRevenue: 13299
+[Safe] gain: 6081
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] totalRevenue: 9330
+[Heuristic] gain: 3533

@@ -1,4 +1,4 @@
-package template.CentralizedStuff;
+package template.Centralized;
 
 import logist.task.Task;
 
@@ -13,6 +13,11 @@ public final class CentralizedAction
 	
 	private final ActionType actionType;
 	private final Task task;
+	
+	public ActionType getActionType()
+	{
+		return actionType;
+	}
 	
 	public Task getTask()
 	{
