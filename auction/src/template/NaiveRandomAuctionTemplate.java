@@ -15,6 +15,9 @@ import logist.task.TaskDistribution;
 import logist.task.TaskSet;
 import logist.topology.Topology;
 import logist.topology.Topology.City;
+import template.Centralized.CentralizedPlan;
+import template.Centralized.Helper;
+import template.Centralized.Solution;
 
 /**
  * A very simple auction agent that assigns all tasks to its first vehicle and
@@ -47,15 +50,16 @@ public class NaiveRandomAuctionTemplate implements AuctionBehavior {
 //			if (city1 != city2)
 //				System.out.printf("%s -> %s:  %s %s %s%n", city1.name, city2.name, distribution.probability(city1, city2), distribution.weight(city1, city2), distribution.reward(city1, city2));
 //		}));
-		
-		System.out.println(agent.vehicles());
 	}
+	
+	private Long totalRevenue = 0L;
 
 	@Override
 	public void auctionResult(Task previous, int winner, Long[] bids)
 	{
 		if (winner == agent.id()) {
 			currentCity = previous.deliveryCity;
+			totalRevenue += bids[agent.id()];
 		}
 	}
 	
@@ -88,6 +92,14 @@ public class NaiveRandomAuctionTemplate implements AuctionBehavior {
 		plans.add(planVehicle1);
 		while (plans.size() < vehicles.size())
 			plans.add(Plan.EMPTY);
+		
+		Long totalCost = Helper.zip(vehicles.stream(), plans.stream())
+			.map(pair -> pair._1.costPerKm() * pair._2.totalDistance())
+			.reduce(0., Double::sum)
+			.longValue();
+		
+		System.out.printf("[Random] adaptedFinalSolution cost: %d%n", totalCost);
+		System.out.printf("[Random] totalRevenue: %d%n", totalRevenue);
 
 		return plans;
 	}
@@ -112,6 +124,7 @@ public class NaiveRandomAuctionTemplate implements AuctionBehavior {
 			// set current city
 			current = task.deliveryCity;
 		}
+		
 		return plan;
 	}
 }

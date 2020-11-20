@@ -16,6 +16,7 @@ import template.Centralized.Solution;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class BaselineAuctionTemplate implements AuctionBehavior
@@ -103,118 +104,6 @@ public class BaselineAuctionTemplate implements AuctionBehavior
 //		System.out.printf("tempNewSolution: %d%n", tempNewSolution.computeCost());
 //		System.out.printf("marginalZero: %d%n", marginalZero);
 		return marginalCost;
-		
-		
-		
-//		// TODO seed initial plan with currentSolution?
-//		// TODO nope, do both (seeded and not seeded) and compare, take the best
-//
-//		// !!! best solution is always seededSolver, as it does not contain the new task!!!
-//
-//		bidTimeout = 5 * 1000L;
-//
-//		if (currentTaskSet.isEmpty())
-//		{
-//			ExecutorService threadPool = Executors.newFixedThreadPool(1);
-//			CentralizedSolver unseededSolver = new CentralizedSolver(vehicles, taskSet, random);
-//			Future<Solution> unseededFuture = threadPool.submit(unseededSolver);
-//
-//			try
-//			{
-//				threadPool.awaitTermination(bidTimeout - (System.currentTimeMillis() - startTime), TimeUnit.MILLISECONDS);
-//			}
-//			catch (InterruptedException e)
-//			{
-//				e.printStackTrace();
-//			}
-//
-//			Solution unseededSolution = null;
-//			if (unseededFuture.isDone())
-//			{
-//				// TODO keep this branch only if CentralizedSolver has a time/iteration bound again
-//				try
-//				{
-//					unseededSolution = unseededFuture.get();
-//				}
-//				catch (Exception e)
-//				{
-//					e.printStackTrace();
-//				}
-//			}
-//			else
-//			{
-//				unseededSolution = unseededSolver.getLastSolution();
-//			}
-//
-//			tempNewSolution = unseededSolution;
-//		}
-//		else
-//		{
-//			ExecutorService threadPool = Executors.newFixedThreadPool(2);
-//			CentralizedSolver unseededSolver = new CentralizedSolver(vehicles, taskSet, random);
-//			CentralizedSolver seededSolver = new CentralizedSolver(currentSolution, random);
-//
-//			Future<Solution> unseededFuture = threadPool.submit(unseededSolver);
-//			Future<Solution> seededFuture = threadPool.submit(seededSolver);
-//
-//			try
-//			{
-//				threadPool.awaitTermination(bidTimeout - (System.currentTimeMillis() - startTime), TimeUnit.MILLISECONDS);
-//			}
-//			catch (InterruptedException e)
-//			{
-//				e.printStackTrace();
-//			}
-//
-//			Solution unseededSolution = null;
-//			Solution seededSolution = null;
-//
-//			if (unseededFuture.isDone())
-//			{
-//				// TODO keep this branch only if CentralizedSolver has a time/iteration bound again
-//				try
-//				{
-//					unseededSolution = unseededFuture.get();
-//				}
-//				catch (Exception e)
-//				{
-//					e.printStackTrace();
-//				}
-//			}
-//			else
-//			{
-//				unseededSolution = unseededSolver.getLastSolution();
-//			}
-//
-//			if (seededFuture.isDone())
-//			{
-//				// TODO keep this branch only if CentralizedSolver has a time/iteration bound again
-//				try
-//				{
-//					seededSolution = seededFuture.get();
-//				}
-//				catch (Exception e)
-//				{
-//					e.printStackTrace();
-//				}
-//			}
-//			else
-//			{
-//				seededSolution = seededSolver.getLastSolution();
-//			}
-//
-//			assert unseededSolution != null;
-//			assert seededSolution != null;
-//
-//			tempNewSolution = Collections.min(List.of(unseededSolution, seededSolution),
-//			                                  Comparator.comparingLong(Solution::computeCost));
-//			// TODO !!! best solution is always seededSolver, as it does not contain the new task!!!
-//		}
-//
-//		System.out.printf("tempNewSolution: %s%n", tempNewSolution);
-//
-//		marginalCost = tempNewSolution.computeCost() - currentSolution.computeCost();
-//		return marginalCost;
 	}
 	
 	@Override
@@ -222,8 +111,8 @@ public class BaselineAuctionTemplate implements AuctionBehavior
 	{
 		long startTime = System.currentTimeMillis();
 		Solution finalSolution = CentralizedSolver.slsSearch(vehicles, tasks, planTimeout, startTime, random);
-		System.out.printf("finalSolution cost: %s%n", finalSolution.computeCost());
-		
+		System.out.printf("[Baseline] finalSolution cost: %s%n", finalSolution.computeCost());
+
 		List<Plan> planList = finalSolution.getPlanList();
 //		for (Plan plan: planList)
 //		{
