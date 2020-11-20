@@ -1,0 +1,97 @@
+=== Fixed additive ===
+
+[Advantage situation]
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.2
+
+[Heuristic] adaptedFinalSolution cost: 8061
+[Heuristic] gain: 10937
+[Safe] adaptedFinalSolution cost: 6617
+[Safe] gain: 5883
+
+[Disadvantage situation]
+
+additivePositiveAttenuatingFactor = 0.6
+additiveNegativeAttenuatingFactor = 0.1
+
+[Safe] adaptedFinalSolution cost: 7537
+[Safe] gain: 5959
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 2768
+
+
+[Heuristic] total gain: 13,705
+[Safe] total gain: 11,842
+ratio: 1.1573213984124303327140685694984
+
+
+=== Adaptive additive ===
+
+Multiplicative factor: 1.5
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 7966
+[Heuristic] gain: 10919
+[Safe] adaptedFinalSolution cost: 6372
+[Safe] gain: 6470
+
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5495
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 3108
+
+
+[Heuristic] total gain: 14,027
+[Safe] total gain: 11,965
+ratio: 1.1723359799414960300877559548684
+
+
+Multiplicative factor: 2
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 7966
+[Heuristic] gain: 11069
+[Safe] adaptedFinalSolution cost: 6372
+[Safe] gain: 6560
+
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5739
+[Heuristic] adaptedFinalSolution cost: 6545
+[Heuristic] gain: 3109
+
+
+[Heuristic] total gain: 14,178
+[Safe] total gain: 12,299
+ratio: 1.1527766485080087812017237173754
+
+
+Multiplicative factor: 1.25
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 7966
+[Heuristic] gain: 10844
+[Safe] adaptedFinalSolution cost: 6372
+[Safe] gain: 6425
+
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5495
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 3108
+
+
+[Heuristic] total gain: 13,952
+[Safe] total gain: 11,920
+ratio: 1.1704697986577181208053691275168
