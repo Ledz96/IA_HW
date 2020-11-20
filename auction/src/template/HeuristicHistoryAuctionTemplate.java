@@ -208,6 +208,56 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 		
 		return visitedCities;
 	}
+
+	private long computeBid(long marginalCost)
+	{
+		long targetBid;
+
+		if (lastMarginalCost <= 0)
+		{
+			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
+
+			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
+			return Math.max(1, targetBid - loss);
+		}
+
+		Set<Topology.City> newVisitedCities = computeVisitedCities(tempNewSolution);
+		newVisitedCities.removeAll(computeVisitedCities(currentSolution));
+
+		// We have at least a new unseen city in the plan
+		if (newVisitedCities.size() > 0)
+		{
+			double avgCityWeight = newVisitedCities.stream()
+					.map(city -> cityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
+			double normalizedAvgCityWeight = newVisitedCities.stream()
+					.map(city -> normalizedCityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
+
+			double multiplicativeFactor;
+			if (avgCityWeight > 0)
+			{
+				weightFlag = WeightFlag.Pos;
+				multiplicativeFactor = multiplicativePositiveAttenuatingFactor * normalizedAvgCityWeight;
+			}
+			else
+			{
+				weightFlag = WeightFlag.Neg;
+				multiplicativeFactor = multiplicativeNegativeAttenuatingFactor * normalizedAvgCityWeight;
+			}
+
+			// First case or not
+			targetBid = (minBidHistoryWindow.size() < 1) ? lastMarginalCost * 2  :lastMarginalCost + 1;
+
+			return targetBid + (long) (multiplicativeFactor * targetBid);
+		}
+		// No new city: safe behavior
+		else
+		{
+			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
+
+			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
+			return Math.max(lastMarginalCost + 1, targetBid - loss);
+		}
+	}
 	
 	@Override
 	public Long askPrice(Task task) // timeout-bid
@@ -223,70 +273,8 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 		
 		tempNewSolution = List.of(tempNewSolutionSLS, tempNewSolutionNeighbors).stream().min(Comparator.comparingLong(Solution::computeCost)).get();
 		lastMarginalCost = (tempNewSolution.computeCost() - currentSolution.computeCost());
-		
-		if (minBidHistoryWindow.size() < 1)
-		{
-			return lastMarginalCost * 2;
-			// TODO change based on destination city connectivity
-		}
-		
-		// Try to gain, but stay safe
-		long targetBid;
-		
-		if (lastMarginalCost <= 0)
-		{
-			// 2
-			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
-			
-			// 3
-//			targetBid = (long) minBidHistoryWindow.stream().mapToLong(Long::longValue).average().getAsDouble();
-			
-			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
-			targetBid = Math.max(1, targetBid - loss);
-		}
-		else
-		{
-			Set<Topology.City> newVisitedCities = computeVisitedCities(tempNewSolution);
-			newVisitedCities.removeAll(computeVisitedCities(currentSolution));
-			
-			if (newVisitedCities.size() > 0)
-			{
-				// We have at least a new unseen city in the plan
-				
-				targetBid = lastMarginalCost + 1;
-				
-				double avgCityWeight = newVisitedCities.stream()
-					.map(city -> cityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
-				double normalizedAvgCityWeight = newVisitedCities.stream()
-					.map(city -> normalizedCityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
-				
-				// multiplicative
-				
-				double multiplicativeFactor;
-				if (avgCityWeight > 0)
-				{
-					weightFlag = WeightFlag.Pos;
-					multiplicativeFactor = multiplicativePositiveAttenuatingFactor * normalizedAvgCityWeight;
-				}
-				else
-				{
-					weightFlag = WeightFlag.Neg;
-					multiplicativeFactor = multiplicativeNegativeAttenuatingFactor * normalizedAvgCityWeight;
-				}
-				
-				targetBid += multiplicativeFactor * targetBid;
-			}
-			else
-			{
-				// 2
-				targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
-				
-				long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
-				targetBid = Math.max(lastMarginalCost + 1, targetBid - loss);
-			}
-		}
-		
-		return targetBid;
+
+		return computeBid(lastMarginalCost);
 	}
 	
 	@Override
