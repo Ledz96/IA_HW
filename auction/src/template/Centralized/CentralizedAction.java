@@ -14,6 +14,11 @@ public final class CentralizedAction
 	private final ActionType actionType;
 	private final Task task;
 	
+	public ActionType getActionType()
+	{
+		return actionType;
+	}
+	
 	public Task getTask()
 	{
 		return task;

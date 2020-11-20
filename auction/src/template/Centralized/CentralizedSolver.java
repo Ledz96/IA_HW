@@ -9,10 +9,10 @@ import java.util.stream.Collectors;
 
 public class CentralizedSolver
 {
+//	private static final int N_ITER = 10000;
 	private static final int N_ITER = 10000;
-//	private static final int N_ITER = 1000;
+//	private static final int STUCK_LIMIT = 1000;
 	private static final int STUCK_LIMIT = 1000;
-//	private static final int STUCK_LIMIT = 100;
 	private static final double exploreProb = 0.5;
 	
 	private static Solution selectOptimizedInitialSolution(List<Vehicle> vehicleList, Set<Task> tasks, Random random)
@@ -150,8 +150,7 @@ public class CentralizedSolver
 	                                 long startTime,
 	                                 Random random)
 	{
-		return slsSearch(selectOptimizedInitialSolution(vehicleList, tasks, random),
-		                 timeout, startTime, random);
+		return slsSearch(selectOptimizedInitialSolution(vehicleList, tasks, random), timeout, startTime, random);
 	}
 	
 	public static Solution addTaskAndSearch(Solution solution, Task task)
