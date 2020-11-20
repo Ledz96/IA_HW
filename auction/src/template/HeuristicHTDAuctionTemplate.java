@@ -18,22 +18,35 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 {
-	// multiplicative advantage factors
-	private static final Double MUL_ADV_POS_F = 0.2;
-	private static final Double MUL_ADV_NEG_F = 0.2;
-	
-	// multiplicative disadvantage factors
-	private static final Double MUL_DIS_POS_F = 0.2;
-	private static final Double MUL_DIS_NEG_F = 0.1;
-	
-	private static final Double MUL_F = 1.5;
+	// History&Topology&Distribution-based Heuristic
 	
 	private enum WeightFlag
 	{
 		None, Pos, Neg
 	}
 	
-	private static final Long LOSS_MARGIN = 3L;
+	// Multiplicative advantage factors
+	private static final Double MUL_ADV_POS_F = 0.2;
+	private static final Double MUL_ADV_NEG_F = 0.2;
+	
+	// Multiplicative disadvantage factors
+	private static final Double MUL_DIS_POS_F = 0.2;
+	private static final Double MUL_DIS_NEG_F = 0.1;
+	
+	// Factor for the adaptation of the multiplicative factors
+	private static final Double MUL_F = 1.5;
+	
+	private enum LossFlag
+	{
+		None, ZeroMarginalCost, NoNewCities
+	}
+	
+	// Percentages of loss the agent accepts for assuring a task
+	private static final Double ZMC_LOSS_MARGIN_P = 0.1; // Zero Marginal Cost
+	private static final Double NNC_LOSS_MARGIN_P = 0.05; // No New Cities
+	
+	// Factor for the adaptation of the loss factors
+	private static final Double LOSS_F = 1.5;
 	
 	/////
 	
@@ -59,6 +72,10 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 	private WeightFlag weightFlag;
 	private Double multiplicativePositiveAttenuatingFactor;
 	private Double multiplicativeNegativeAttenuatingFactor;
+	
+	private LossFlag lossFlag;
+	private Double zeroMarginalCostLossMarginProb;
+	private Double noNewCitiesLossMarginProb;
 	
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution, Agent agent) // timeout-setup
@@ -92,6 +109,9 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 			multiplicativePositiveAttenuatingFactor = MUL_DIS_POS_F;
 			multiplicativeNegativeAttenuatingFactor = MUL_DIS_NEG_F;
 		}
+		
+		zeroMarginalCostLossMarginProb = ZMC_LOSS_MARGIN_P;
+		noNewCitiesLossMarginProb = NNC_LOSS_MARGIN_P;
 	}
 	
 	Map<Topology.City, Double> cityWeightMap = new HashMap<>();
@@ -160,11 +180,15 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		minBidHistoryWindow.addFirst(minBid);
 		
 		minHistoryBid = Math.min(minHistoryBid, minBid);
+		System.out.printf("minBidHistoryWindow: %s%n", minBidHistoryWindow);
 	}
 	
 	@Override
 	public void auctionResult(Task task, int winner, Long[] bids) // timeout-bid
 	{
+		System.out.printf("task.id == %s%n", task.id);
+		System.out.printf("winner == %s%n", winner);
+		
 		if (bids.length > 1)
 		{
 			updateHistory(bids);
@@ -180,6 +204,11 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 				multiplicativePositiveAttenuatingFactor *= MUL_F;
 			else if (weightFlag == WeightFlag.Neg)
 				multiplicativeNegativeAttenuatingFactor /= MUL_F;
+			
+			if (lossFlag == LossFlag.ZeroMarginalCost)
+				zeroMarginalCostLossMarginProb /= LOSS_F;
+			else if (lossFlag == LossFlag.NoNewCities)
+				noNewCitiesLossMarginProb /= LOSS_F;
 		}
 		else
 		{
@@ -187,6 +216,11 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 				multiplicativePositiveAttenuatingFactor /= MUL_F;
 			else if(weightFlag == WeightFlag.Neg)
 				multiplicativeNegativeAttenuatingFactor *= MUL_F;
+			
+			if (lossFlag == LossFlag.ZeroMarginalCost)
+				zeroMarginalCostLossMarginProb *= LOSS_F;
+			else if (lossFlag == LossFlag.NoNewCities)
+				noNewCitiesLossMarginProb *= LOSS_F;
 		}
 	}
 	
@@ -213,22 +247,48 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 	private long computeBid(long marginalCost)
 	{
 		long targetBid;
+		
+		System.out.printf("[HTD] marginal cost == %s%n", marginalCost);
 
-		if (lastMarginalCost <= 0)
+		if (marginalCost <= 0)
 		{
+			// Our marginal cost is 0, try by all means to take the task -> bid at the historical min in a window minus
+			// a loss which increases/decreases according to our past ability to take the task in this branch
+			
+			lossFlag = LossFlag.ZeroMarginalCost;
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
-
-			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
+			
+			System.out.printf("targetBid: %s%n", targetBid);
+			
+			long loss = (long) (targetBid * zeroMarginalCostLossMarginProb);
+			System.out.printf("[HTD] bid == %s%n", Math.max(1, targetBid - loss));
 			return Math.max(1, targetBid - loss);
 		}
 		
 		Set<Topology.City> newSolutionVisitedCities = computeVisitedCities(tempNewSolution);
 		Set<Topology.City> newVisitedCities = new HashSet<>(newSolutionVisitedCities);
 		newVisitedCities.removeAll(computeVisitedCities(currentSolution));
-
-		// We have at least a new unseen city in the plan
-		if (newVisitedCities.size() > 0)
+		
+		if (newVisitedCities.size() == 0)
 		{
+			// No new city: safe behavior
+			
+			lossFlag = LossFlag.NoNewCities;
+			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
+			
+			// TODO use percentage (e.g. loss = 0.05 * (targetBid - (marginalCost + 1)))
+			long loss = (long) (noNewCitiesLossMarginProb * targetBid);
+			System.out.printf("[HTD] bid == %s%n", Math.max(marginalCost + 1, targetBid - loss));
+			return Math.max(marginalCost + 1, targetBid - loss);
+		}
+		else
+		{
+			// We have at least a new unseen city in the plan
+			
+			// Use those cities weights (normalized difference between the median of the average distances from any city
+			// to all others and the single city average distance to other cities), as well as their probabilities to
+			// have a task from themselves to a city with a negative (good) weight
+			
 			double avgCityWeight = newVisitedCities.stream()
 					.map(city -> cityWeightMap.get(city)).mapToDouble(Double::doubleValue).average().getAsDouble();
 			double normalizedAvgCityWeight = newVisitedCities.stream()
@@ -259,21 +319,14 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 			}
 
 			// First case or not
-			targetBid = (minBidHistoryWindow.size() < 1) ? lastMarginalCost * 2 : lastMarginalCost + 1;
+			targetBid = (minBidHistoryWindow.size() < 1) ? marginalCost * 2 : marginalCost + 1;
 			
 			targetBid += (long) (multiplicativeFactor * targetBid);
 			
 			targetBid -= (backInPlanProb * backInPlanAttenuation) * targetBid;
 			
+			System.out.printf("[HTD] bid == %s%n", targetBid);
 			return targetBid;
-		}
-		// No new city: safe behavior
-		else
-		{
-			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
-
-			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
-			return Math.max(lastMarginalCost + 1, targetBid - loss);
 		}
 	}
 	
@@ -282,6 +335,7 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 	{
 		long startTime = System.currentTimeMillis();
 		weightFlag = WeightFlag.None;
+		lossFlag = LossFlag.None;
 		
 		Set<Task> taskSet = new HashSet<>(currentTaskSet);
 		taskSet.add(task);
@@ -322,15 +376,10 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		Solution adaptedFinalSolution = new Solution(finalCentralizedPlanList);
 		
-		System.out.printf("[Heuristic] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
-		System.out.printf("[Heuristic] totalRevenue: %d%n", totalRevenue);
-		System.out.printf("[Heuristic] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
+		System.out.printf("[HTD] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
+		System.out.printf("[HTD] totalRevenue: %d%n", totalRevenue);
+		System.out.printf("[HTD] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
 		
-		List<Plan> planList = adaptedFinalSolution.getPlanList();
-//		for (Plan plan: planList)
-//		{
-//			System.out.printf("plan: %s%n", plan);
-//		}
-		return planList;
+		return adaptedFinalSolution.getPlanList();
 	}
 }

@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class HeuristicHTAuctionTemplate implements AuctionBehavior
 {
+	// History&Topology-based Heuristic
+	
 	// multiplicative advantage factors
 	private static final Double MUL_ADV_POS_F = 0.2;
 	private static final Double MUL_ADV_NEG_F = 0.2;
@@ -25,7 +27,6 @@ public class HeuristicHTAuctionTemplate implements AuctionBehavior
 	// multiplicative disadvantage factors
 	private static final Double MUL_DIS_POS_F = 0.2;
 	private static final Double MUL_DIS_NEG_F = 0.1;
-	
 	
 	private static final Double MUL_F = 1.5;
 	
@@ -212,12 +213,14 @@ public class HeuristicHTAuctionTemplate implements AuctionBehavior
 	private long computeBid(long marginalCost)
 	{
 		long targetBid;
+		System.out.printf("[HT] marginal cost == %s%n", marginalCost);
 
-		if (lastMarginalCost <= 0)
+		if (marginalCost <= 0)
 		{
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
 
 			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
+			System.out.printf("[HT] bid == %s%n", Math.max(1, targetBid - loss));
 			return Math.max(1, targetBid - loss);
 		}
 
@@ -245,8 +248,9 @@ public class HeuristicHTAuctionTemplate implements AuctionBehavior
 			}
 
 			// First case or not
-			targetBid = (minBidHistoryWindow.size() < 1) ? lastMarginalCost * 2  :lastMarginalCost + 1;
-
+			targetBid = (minBidHistoryWindow.size() < 1) ? marginalCost * 2 : marginalCost + 1;
+			
+			System.out.printf("[HT] bid == %s%n", targetBid + (long) (multiplicativeFactor * targetBid));
 			return targetBid + (long) (multiplicativeFactor * targetBid);
 		}
 		// No new city: safe behavior
@@ -255,7 +259,8 @@ public class HeuristicHTAuctionTemplate implements AuctionBehavior
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
 
 			long loss = (long) Math.max(0, LOSS_MARGIN + random.nextGaussian());
-			return Math.max(lastMarginalCost + 1, targetBid - loss);
+			System.out.printf("[HT] bid == %s%n", Math.max(marginalCost + 1, targetBid - loss));
+			return Math.max(marginalCost + 1, targetBid - loss);
 		}
 	}
 	
@@ -304,9 +309,9 @@ public class HeuristicHTAuctionTemplate implements AuctionBehavior
 		
 		Solution adaptedFinalSolution = new Solution(finalCentralizedPlanList);
 		
-		System.out.printf("[Heuristic] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
-		System.out.printf("[Heuristic] totalRevenue: %d%n", totalRevenue);
-		System.out.printf("[Heuristic] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
+		System.out.printf("[HT] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
+		System.out.printf("[HT] totalRevenue: %d%n", totalRevenue);
+		System.out.printf("[HT] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
 		
 		List<Plan> planList = adaptedFinalSolution.getPlanList();
 //		for (Plan plan: planList)
