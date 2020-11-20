@@ -26,11 +26,11 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 	private static final Double ADD_DIS_POS_F = 0.6;
 	private static final Double ADD_DIS_NEG_F = 0.1;
 	
-	// additive advantage factors
+	// multiplicative advantage factors
 	private static final Double MUL_ADV_POS_F = 0.2;
 	private static final Double MUL_ADV_NEG_F = 0.2;
 	
-	// additive disadvantage factors
+	// multiplicative disadvantage factors
 	private static final Double MUL_DIS_POS_F = 0.2;
 	private static final Double MUL_DIS_NEG_F = 0.1;
 	
@@ -97,8 +97,8 @@ public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
 			additivePositiveAttenuatingFactor = ADD_ADV_POS_F;
 			additiveNegativeAttenuatingFactor = ADD_ADV_NEG_F;
 			
-			multiplicativePositiveAttenuatingFactor = ADD_ADV_POS_F;
-			multiplicativeNegativeAttenuatingFactor = ADD_ADV_NEG_F;
+			multiplicativePositiveAttenuatingFactor = MUL_ADV_POS_F;
+			multiplicativeNegativeAttenuatingFactor = MUL_ADV_NEG_F;
 		}
 		else // disadvantage
 		{

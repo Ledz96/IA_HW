@@ -1,6 +1,6 @@
 === Adaptive multiplicative ===
 
-MUL_ADV_POS_F = 0.4
+MUL_ADV_POS_F = 0.6
 MUL_ADV_NEG_F = 0.2
 MUL_DIS_POS_F = 0.4
 MUL_DIS_NEG_F = 0.1
@@ -52,7 +52,7 @@ ratio: 0.96831224380680805560506148636607
 
 
 
-MUL_ADV_POS_F = 0.2
+MUL_ADV_POS_F = 0.6
 MUL_ADV_NEG_F = 0.2
 MUL_DIS_POS_F = 0.2
 MUL_DIS_NEG_F = 0.1
@@ -75,3 +75,29 @@ MUL_DIS_NEG_F = 0.1
 [Heuristic] total gain: 16,791
 [Safe] total gain: 14,247
 ratio: 1.1785639081911981469783112234155
+
+
+
+MUL_ADV_POS_F = 0.2
+MUL_ADV_NEG_F = 0.2
+MUL_DIS_POS_F = 0.2
+MUL_DIS_NEG_F = 0.1
+
+[Advantage situation]
+
+[Heuristic] adaptedFinalSolution cost: 7966
+[Heuristic] gain: 11982
+[Safe] adaptedFinalSolution cost: 6372
+[Safe] gain: 7055
+
+[Disadvantage situation]
+
+[Safe] adaptedFinalSolution cost: 7357
+[Safe] gain: 5495
+[Heuristic] adaptedFinalSolution cost: 5797
+[Heuristic] gain: 3164
+
+
+[Heuristic] total gain: 15,146
+[Safe] total gain: 12,550
+ratio: 1.2068525896414342629482071713147
