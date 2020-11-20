@@ -1,0 +1,98 @@
+[Advantage situation] (avg 5)
+
+[HTD] adaptedFinalSolution cost: 8794
+[HTD] gain: 7828
+[HT] adaptedFinalSolution cost: 6046
+[HT] gain: 3913
+
+[Disadvantage situation]
+
+[HT] adaptedFinalSolution cost: 9798
+[HT] gain: 7568
+[HTD] adaptedFinalSolution cost: 5896
+[HTD] gain: 3676
+
+[HTD] total gain: 11,504
+[HT] total gain: 11,481
+ratio: 1.027530928733228785502700818958
+
+===
+map prob to [-0.5,0.5]
+
+[Advantage situation] (avg 3)
+
+[HTD] adaptedFinalSolution cost: 8697
+[HTD] gain: 8092
+[HT] adaptedFinalSolution cost: 5896
+[HT] gain: 3981
+
+
+[HTD] total gain: 11,768
+[HT] total gain: 11,549
+ratio: 1.0189626807515802233959650186163
+
+===
+
+[Advantage situation] (avg 3)
+
+[HTD] adaptedFinalSolution cost: 8581
+[HTD] gain: 10817
+[HT] adaptedFinalSolution cost: 8680
+[HT] gain: 7481
+
+[HTD] total gain: 11,515
+[HT] total gain: 11,412
+ratio: 1.0090255871012968804766912022433
+
+===
+
+[Advantage situation]
+
+[HTD] adaptedFinalSolution cost: 7966
+[HTD] gain: 6167
+[HT] adaptedFinalSolution cost: 6372
+[HT] gain: 3584
+
+===
+
+last loss parameters update
+
+[Advantage situation] (avg 5)
+
+[HTD] adaptedFinalSolution cost: 7905
+[HTD] gain: 11531
+[HT] adaptedFinalSolution cost: 5307
+[HT] gain: 3719
+
+[Disadvantage situation] (avg 5)
+
+[HT] adaptedFinalSolution cost: 7816
+[HT] gain: 6020
+[HTD] adaptedFinalSolution cost: 6372
+[HTD] gain: 2393
+
+[HTD] total gain: 13,924
+[HT] total gain: 9,739
+ratio: 1.4297155765479001950918985522128
+
+===
+
+same params vs Safe
+
+[Advantage situation] (avg 5)
+
+[HTD] adaptedFinalSolution cost: 7479
+[HTD] gain: 7537
+[Safe] adaptedFinalSolution cost: 6372
+[Safe] gain: 3766
+
+[Disadvantage situation] (avg 5)
+
+[Safe] adaptedFinalSolution cost: 7665
+[Safe] gain: 6298
+[HTD] adaptedFinalSolution cost: 7959
+[HTD] gain: 12518
+
+[HTD] total gain: 20,055
+[Safe] total gain: 10,064
+ratio: 1.9927464228934817170111287758347

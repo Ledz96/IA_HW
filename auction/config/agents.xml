@@ -19,9 +19,14 @@
 		<set class-name="template.SafeHistoryAuctionTemplate"/>
 	</agent>
 
-	<agent name="auction-heuristic">
+	<agent name="auction-ht">
 		<set class-path="bin/"/>
-		<set class-name="template.HeuristicHistoryAuctionTemplate"/>
+		<set class-name="template.HeuristicHTAuctionTemplate"/>
+	</agent>
+
+	<agent name="auction-htd">
+		<set class-path="bin/"/>
+		<set class-name="template.HeuristicHTDAuctionTemplate"/>
 	</agent>
 	
 </agents>
