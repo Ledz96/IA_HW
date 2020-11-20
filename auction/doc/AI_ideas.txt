@@ -17,14 +17,29 @@ Factors to consider when MarginalCost != 0:
     Try to stay below:
         - avg(min(sliding_window(bids)))
         - min(min(sliding_window(bids)))
+		- TOEVAL: start with avg(min), if for 3/4 consecutive turns we have not yet taken any task, we switch to min(min)
     If movement leads to new city (either pickup or delivery, doesn't matter):
         - if new city is disconnected (connected to few cities or far from connections) ask for higher pay
     If movement leads to very connected city, from further away city:
         - ask for the bare minimum, even at loss
 
 
+What we need:
+	- normalized distances between all cities (lower than average: good)
+		- remove outliers from avg distance for weight calculation
+		How to use:
+			- add non-normalized values to the target bid multiplied by a factor (e.g. 0.5/0.75)
+			- add to the target bid itself multiplied by both the normalized value and a factor
+	- distribution of tasks that allow a marginal cost 0 compared to the solution in case we pick up the current task.
+	- destination distribution:
+	How to use:
+		favour cities with high probability of a task to a near city
+
 TOEVAL: according to the task generation distribution, it may be wise to consider near future task as improbable to be the same
 as past tasks auctioned?
+
+
+
 
 
 -)	Adversarial: save the task assignment history for all agents and consider them as clone adversaries: predict their plan
