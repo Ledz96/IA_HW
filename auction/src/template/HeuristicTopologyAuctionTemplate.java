@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
-public class HeuristicHistoryAuctionTemplate implements AuctionBehavior
+public class HeuristicTopologyAuctionTemplate implements AuctionBehavior
 {
 	// multiplicative advantage factors
 	private static final Double MUL_ADV_POS_F = 0.2;
