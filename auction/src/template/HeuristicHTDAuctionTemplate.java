@@ -6,13 +6,16 @@ import logist.agent.Agent;
 import logist.behavior.AuctionBehavior;
 import logist.plan.Plan;
 import logist.simulation.Vehicle;
+import logist.simulation.VehicleImpl;
 import logist.task.Task;
 import logist.task.TaskDistribution;
 import logist.task.TaskSet;
 import logist.topology.Topology;
 import template.Centralized.*;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -356,7 +359,7 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		if (currentSolution.computeCost() == 0) // Solution is empty
 		{
-			System.out.printf("[Safe] empty solution%n");
+			System.out.printf("[HTD] empty solution%n");
 			return currentSolution.getPlanList();
 		}
 		

@@ -196,8 +196,17 @@ public class Solution
 	@Override
 	public String toString()
 	{
-		return "Solution{" +
-			"centralizedPlanList=" + centralizedPlanList +
-			'}';
+//		return "Solution{" +
+//			"centralizedPlanList=" + centralizedPlanList +
+//			'}';
+		
+		String ret = String.format("Solution {%n");
+		for (CentralizedPlan centralizedPlan : centralizedPlanList)
+		{
+			ret += String.format("%s%n", centralizedPlan.toString());
+		}
+		ret += "}";
+		
+		return ret;
 	}
 }

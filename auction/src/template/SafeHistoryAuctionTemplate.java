@@ -114,6 +114,7 @@ public class SafeHistoryAuctionTemplate implements AuctionBehavior
 		Solution tempNewSolutionNeighbors = CentralizedSolver.addTaskAndSearch(currentSolution, task);
 		
 		tempNewSolution = List.of(tempNewSolutionSLS, tempNewSolutionNeighbors).stream().min(Comparator.comparingLong(Solution::computeCost)).get();
+//		System.out.printf("[Safe] tempNewSolution: %s%n", tempNewSolution);
 		
 		lastMarginalCost = (tempNewSolution.computeCost() - currentSolution.computeCost());
 		
@@ -148,7 +149,11 @@ public class SafeHistoryAuctionTemplate implements AuctionBehavior
 			// TODO ...
 		}
 		
+		System.out.printf("[Safe] lastMarginalCost == %s%n", lastMarginalCost);
+		
 		long loss = (long) Math.max(0, lossMargin + random.nextGaussian());
+		
+		System.out.printf("[Safe] bid == %s%n", Math.max(lastMarginalCost + 1, targetBid - loss));
 		return Math.max(lastMarginalCost + 1, targetBid - loss);
 	}
 	

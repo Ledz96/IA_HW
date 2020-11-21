@@ -52,3 +52,12 @@ as past tasks auctioned?
 	What about the first few rounds? Since we can't compute other's plan, we should adopt another strategy. A simple one would
 	be just not to bid high so that in the "worst" case we're getting a gain, in the "best" we're letting the other take the
 	tasks so that we can then switch to the adversarial strategy.
+
+
+Adv on HTD:
+	- no new cities
+		max(marginal cost, min(adversary marginal cost, safe_min))) - loss
+	- marginal cost == 0
+		max(1, min(adversary marginal cost, safe_min))) - loss
+	- new cities
+		target_bid = max(our_marginal_cost, adv_marginal_cost - margin)
