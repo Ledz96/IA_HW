@@ -19,6 +19,10 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unused")
 public class AdversarialAuctionTemplate implements AuctionBehavior
 {
+	private double ATTENUATION_START = 0.71;
+	private double ATTENUATION_ADAPT_F = 1.15;
+	
+	
 	private Long setupTimeout;
 	private Long planTimeout;
 	private Long bidTimeout;
@@ -36,8 +40,9 @@ public class AdversarialAuctionTemplate implements AuctionBehavior
 
 	private Long lastMarginalCost;
 	private Long totalRevenue = 0L;
-
-	// TODO magic number = 0.71
+	
+	private double attenuationFactor = ATTENUATION_START;
+	private boolean attenuationUsed;
 
 	private void initAgentMaps(int id, List<Vehicle> vehicleList)
 	{
@@ -57,16 +62,17 @@ public class AdversarialAuctionTemplate implements AuctionBehavior
 		int maxCapacity = myVehicles.stream().map(Vehicle::capacity).max(Integer::compareTo).get();
 		int minCostPerKm = myVehicles.stream().map(Vehicle::costPerKm).min(Integer::compareTo).get();
 		Set<Topology.City> cities = new HashSet<>(topology.cities());
+		cities.removeAll(myVehicles.stream().map(Vehicle::homeCity).collect(Collectors.toSet()));
 		
 		List<Vehicle> newVehicleList = new ArrayList<>();
 		for (Vehicle vehicle : myVehicles)
 		{
-//			Topology.City city = cities.stream().skip((int) (random.nextDouble() * cities.size())).findFirst().get();
-//			cities.remove(city);
-//
-//			newVehicleList.add(new VehicleImpl(vehicle.id(), vehicle.name(), maxCapacity, minCostPerKm, city, (long) vehicle.speed(), vehicle.color()).getInfo());
-			
-			newVehicleList.add(new VehicleImpl(vehicle.id(), vehicle.name(), vehicle.capacity(), vehicle.costPerKm(), vehicle.homeCity(), (long) vehicle.speed(), vehicle.color()).getInfo());
+			Topology.City city = cities.stream().skip((int) (random.nextDouble() * cities.size())).findFirst().get();
+			cities.remove(city);
+
+			newVehicleList.add(new VehicleImpl(vehicle.id(), vehicle.name(), maxCapacity, minCostPerKm, city, (long) vehicle.speed(), vehicle.color()).getInfo());
+
+//			newVehicleList.add(new VehicleImpl(vehicle.id(), vehicle.name(), vehicle.capacity(), vehicle.costPerKm(), vehicle.homeCity(), (long) vehicle.speed(), vehicle.color()).getInfo());
 		}
 
 		initAgentMaps(id, newVehicleList);
@@ -142,7 +148,17 @@ public class AdversarialAuctionTemplate implements AuctionBehavior
 		currentSolutionMap.put(winner, tempNewSolutionMap.get(winner));
 		
 		if (winner == agent.id())
+		{
 			totalRevenue += bids[agent.id()];
+			
+			if (attenuationUsed)
+				attenuationFactor *= ATTENUATION_ADAPT_F;
+		}
+		else
+		{
+			if (attenuationUsed)
+				attenuationFactor /= ATTENUATION_ADAPT_F;
+		}
 	}
 
 	@Override
@@ -150,6 +166,8 @@ public class AdversarialAuctionTemplate implements AuctionBehavior
 	{
 		long startTime = System.currentTimeMillis();
 		long searchTime = bidTimeout / (2 * currentTaskSetMap.size());
+		
+		attenuationUsed = false;
 
 		// Compute temp solution for everyone
 
@@ -176,7 +194,17 @@ public class AdversarialAuctionTemplate implements AuctionBehavior
 			System.out.printf("[Adv] bestAdvMarginalCost == %s%n", bestAdvMarginalCost.get());
 			System.out.printf("[Adv] bid == %s%n", Math.max(lastMarginalCost + 1, bestAdvMarginalCost.get() - 10));
 			
-			return Math.max(lastMarginalCost + 1, bestAdvMarginalCost.get() - 10);
+//			long targetBid = (long) (attenuationFactor * bestAdvMarginalCost.get());
+			long targetBid = (long) (0.85 * bestAdvMarginalCost.get());
+			if (targetBid > lastMarginalCost + 1)
+			{
+				attenuationUsed = true;
+				return targetBid;
+			}
+			else
+			{
+				return lastMarginalCost + 1;
+			}
 		}
 		else
 		{

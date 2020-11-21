@@ -13,13 +13,11 @@ import logist.task.TaskSet;
 import logist.topology.Topology;
 import template.Centralized.*;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
-public class HeuristicHTDAuctionTemplate implements AuctionBehavior
+public class HeuristicHTDAdvAuctionTemplate implements AuctionBehavior
 {
 	// History&Topology&Distribution-based Heuristic
 	
@@ -51,6 +49,8 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 	// Factor for the adaptation of the loss factors
 	private static final Double LOSS_F = 1.5;
 	
+	private static final Double ADV_RETAIN = 0.85;
+	
 	/////
 	
 	private Long setupTimeout;
@@ -80,6 +80,51 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 	private Double zeroMarginalCostLossMarginProb;
 	private Double noNewCitiesLossMarginProb;
 	
+	// Adversarial
+	
+	private final Map<Integer, List<Vehicle>> vehiclesMap = new HashMap<>();
+	private final Map<Integer, Set<Task>> advCurrentTaskSetMap = new HashMap<>();
+	private final Map<Integer, Solution> advCurrentSolutionMap = new HashMap<>();
+	private final Map<Integer, Solution> advTempNewSolutionMap = new HashMap<>();
+	
+	private long predictionCorrection = 0L;
+	
+	// === ADV ===
+	
+	private void initAgentMaps(int id, List<Vehicle> vehicleList)
+	{
+		vehiclesMap.put(id, vehicleList);
+		
+		advCurrentTaskSetMap.put(id, new HashSet<>());
+		
+		List<CentralizedPlan> centralizedPlanList = new ArrayList<>();
+		vehiclesMap.get(id).forEach(vehicle -> centralizedPlanList.add(new CentralizedPlan(vehicle, new ArrayList<>())));
+		advCurrentSolutionMap.put(id, new Solution(centralizedPlanList));
+		
+		advTempNewSolutionMap.put(id, new Solution(centralizedPlanList));
+	}
+	
+	private void initAgentMaps(int id)
+	{
+		int maxCapacity = vehicles.stream().map(Vehicle::capacity).max(Integer::compareTo).get();
+		int minCostPerKm = vehicles.stream().map(Vehicle::costPerKm).min(Integer::compareTo).get();
+		Set<Topology.City> cities = new HashSet<>(topology.cities());
+		cities.removeAll(vehicles.stream().map(Vehicle::homeCity).collect(Collectors.toSet()));
+		
+		List<Vehicle> newVehicleList = new ArrayList<>();
+		for (Vehicle vehicle : vehicles)
+		{
+			Topology.City city = cities.stream().skip((int) (random.nextDouble() * cities.size())).findFirst().get();
+			cities.remove(city);
+			
+			newVehicleList.add(new VehicleImpl(vehicle.id(), vehicle.name(), maxCapacity, minCostPerKm, city, (long) vehicle.speed(), vehicle.color()).getInfo());
+		}
+		
+		initAgentMaps(id, newVehicleList);
+	}
+	
+	// ===========
+	
 	@Override
 	public void setup(Topology topology, TaskDistribution distribution, Agent agent) // timeout-setup
 	{
@@ -92,7 +137,8 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		this.distribution = distribution;
 		this.agent = agent;
 		this.vehicles = agent.vehicles();
-		this.random = new Random(agent.id());
+//		this.random = new Random(agent.id());
+		this.random = new Random();
 		
 		currentTaskSet = new HashSet<>();
 		
@@ -115,6 +161,10 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		zeroMarginalCostLossMarginProb = ZMC_LOSS_MARGIN_P;
 		noNewCitiesLossMarginProb = NNC_LOSS_MARGIN_P;
+		
+		// === ADV ===
+//		initAgentMaps(agent.id(), agent.vehicles());
+		// ===========
 	}
 	
 	Map<Topology.City, Double> cityWeightMap = new HashMap<>();
@@ -187,16 +237,100 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 //		System.out.printf("minBidHistoryWindow: %s%n", minBidHistoryWindow);
 	}
 	
+	// === ADV ===
+	
+	private Solution findBestNewSolution(int id, Solution currentSolution, Task task, long timeout, long startTime)
+	{
+		// TODO use deterministic only if there are too many tasks or adversaries
+		
+		Set<Task> newTaskSet = new HashSet<>(advCurrentTaskSetMap.get(id));
+		newTaskSet.add(task);
+		
+		Solution tempNewDeterministicSolution = CentralizedSolver.addTaskAndSearch(advCurrentSolutionMap.get(id), task);
+		Solution tempNewSLSSolution = CentralizedSolver.slsSearch(vehiclesMap.get(id), newTaskSet, timeout, startTime, random);
+		return List.of(tempNewSLSSolution, tempNewDeterministicSolution).stream()
+			.min(Comparator.comparingLong(Solution::computeCost)).get();
+	}
+	
+	// ===========
+	
+	// TODO if another agent bids a negative value, is it a problem for us? Would it be better to clamp bids[] to 0?
+	
 	@Override
 	public void auctionResult(Task task, int winner, Long[] bids) // timeout-bid
 	{
-//		System.out.printf("task.id == %s%n", task.id);
-//		System.out.printf("winner == %s%n", winner);
+		long startTime = System.currentTimeMillis();
+		System.out.printf("winner == %s%n", winner);
 		
+		// Safe
 		if (bids.length > 1)
 		{
 			updateHistory(bids);
 		}
+		
+		// === ADV ===
+		if (!advCurrentTaskSetMap.containsKey(winner) && winner != agent.id())
+		{
+			Solution bestAdvSolution = null;
+			long bestAdvSolutionDist = Long.MAX_VALUE;
+			
+			long dio = System.currentTimeMillis();
+			
+			for (int it = 0; it < 50; it++)
+			{
+				// Init so that the mapping of cities to the rival's vehicles is randomized
+				initAgentMaps(winner);
+				
+				Solution advSolution = findBestNewSolution(winner, advCurrentSolutionMap.get(winner), task, bidTimeout, startTime);
+				long advSolutionDist = Math.abs(advSolution.computeCost() - bids[winner]);
+				
+				if (advSolutionDist < bestAdvSolutionDist)
+				{
+					bestAdvSolution = advSolution;
+					bestAdvSolutionDist = advSolutionDist;
+				}
+			}
+			
+			System.out.printf("dio: %s%n", System.currentTimeMillis() - dio);
+			
+			advTempNewSolutionMap.put(winner, bestAdvSolution);
+		}
+		
+		// Decay prediction correction
+		predictionCorrection = (long) (predictionCorrection * 0.5);
+		
+		// If  our prediction is too far from the adversarial bid, update the correction coefficient for adversarial marginal
+		
+		long advMarginal;
+		if (winner == agent.id())
+			advMarginal = tempNewSolution.computeCost() - currentSolution.computeCost();
+		else
+			advMarginal = advTempNewSolutionMap.get(winner).computeCost() - advCurrentSolutionMap.get(winner).computeCost();
+		
+		advMarginal = Math.max(0, advMarginal);
+		
+		if (bids[winner] > 2 * advMarginal)
+		{
+			predictionCorrection += (bids[winner] - advMarginal) / 2;
+		}
+		else if (bids[winner] < 0.5 * advMarginal)
+		{
+			predictionCorrection -= (advMarginal - bids[winner]) / 2;
+		}
+		
+		System.out.printf("[HTDAdv] predictionCorrection: %s%n", predictionCorrection);
+		
+		// TODO reset predictionCorrection if task is lost to a bid over marginal cost?
+		
+		//
+		
+		if (winner != agent.id())
+		{
+			advCurrentTaskSetMap.get(winner).add(task);
+			advCurrentSolutionMap.put(winner, advTempNewSolutionMap.get(winner));
+		}
+		
+		// ===========
 		
 		if (winner == agent.id())
 		{
@@ -247,26 +381,64 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		return visitedCities;
 	}
-
-	private long computeBid(long marginalCost)
+	
+	private Optional<Long> computeAdversarialMarginal(Task task, long timeout, long startTime)
+	{
+		// Compute temp solution for everyone
+		
+		if (advCurrentTaskSetMap.entrySet().isEmpty())
+			return Optional.empty();
+		
+		long timeSpan = timeout / advCurrentTaskSetMap.entrySet().size();
+		for (Map.Entry<Integer, Set<Task>> entry : advCurrentTaskSetMap.entrySet())
+		{
+			advTempNewSolutionMap.put(entry.getKey(),
+			                          findBestNewSolution(entry.getKey(), advCurrentSolutionMap.get(entry.getKey()), task, timeSpan, startTime));
+		}
+		
+		Map<Integer, Long> marginalCostMap = new HashMap<>();
+		for (Map.Entry<Integer, Solution> entry : advTempNewSolutionMap.entrySet())
+		{
+			marginalCostMap.put(entry.getKey(), entry.getValue().computeCost() - advCurrentSolutionMap.get(entry.getKey()).computeCost());
+		}
+		
+		return marginalCostMap.entrySet().stream()
+			.map(Map.Entry::getValue)
+			.min(Comparator.comparingLong(Long::longValue));
+	}
+	
+	private long computeBid(Optional<Long> adversarialMarginal)
 	{
 		long targetBid;
 		
-		System.out.printf("[HTD] marginal cost == %s%n", marginalCost);
+		System.out.printf("[HTDAdv] marginal cost == %s%n", lastMarginalCost);
 
-		if (marginalCost <= 0)
+		if (lastMarginalCost <= 0)
 		{
 			// Our marginal cost is 0, try by all means to take the task -> bid at the historical min in a window minus
 			// a loss which increases/decreases according to our past ability to take the task in this branch
 			
+			lastMarginalCost = 0L;
+			
 			lossFlag = LossFlag.ZeroMarginalCost;
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
 			
-			System.out.printf("targetBid: %s%n", targetBid);
-			
 			long loss = (long) (targetBid * zeroMarginalCostLossMarginProb);
-			System.out.printf("[HTD] bid == %s%n", Math.max(1, targetBid - loss));
-			return Math.max(1, targetBid - loss);
+			
+			// TOEVAL verify this is right
+			if (adversarialMarginal.isPresent())
+			{
+				targetBid = Math.min(targetBid - loss, (long) (ADV_RETAIN * adversarialMarginal.get()));
+				long avgMarginals = (lastMarginalCost + adversarialMarginal.get()) / 2;
+				targetBid = Math.max(Math.max(1, avgMarginals), targetBid);
+			}
+			else
+			{
+				targetBid = Math.max(1, targetBid - loss);
+			}
+			
+			System.out.printf("[HTDAdv] bid == %s%n", targetBid);
+			return targetBid;
 		}
 		
 		Set<Topology.City> newSolutionVisitedCities = computeVisitedCities(tempNewSolution);
@@ -276,14 +448,31 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		if (newVisitedCities.size() == 0)
 		{
 			// No new city: safe behavior
+			System.out.printf("[HTDAdv] no new city%n");
 			
 			lossFlag = LossFlag.NoNewCities;
+			
+			// Min of history mins
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
 			
-			// TODO use percentage (e.g. loss = 0.05 * (targetBid - (marginalCost + 1)))
 			long loss = (long) (noNewCitiesLossMarginProb * targetBid);
-			System.out.printf("[HTD] bid == %s%n", Math.max(marginalCost + 1, targetBid - loss));
-			return Math.max(marginalCost + 1, targetBid - loss);
+			
+			if (adversarialMarginal.isPresent())
+			{
+				// Min between (Min of history mins) and adversarial marginal
+				targetBid = Math.min(targetBid - loss, (long) (ADV_RETAIN * adversarialMarginal.get()));
+				
+				long avgMarginals = (lastMarginalCost + adversarialMarginal.get()) / 2;
+				// If the adversarial marginal is higher than the safe min and of our marginal, take a value in between the marginals
+				targetBid = Math.max(Math.max(lastMarginalCost + 1, avgMarginals), targetBid);
+			}
+			else
+			{
+				targetBid = Math.max(lastMarginalCost + 1, targetBid - loss);
+			}
+			
+			System.out.printf("[HTDAdv] bid == %s%n", targetBid);
+			return targetBid;
 		}
 		else
 		{
@@ -313,25 +502,36 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 			double multiplicativeFactor;
 			if (avgCityWeight > 0)
 			{
+				System.out.printf("[HTDAdv] new cities, but bad!%n");
 				weightFlag = WeightFlag.Pos;
 				multiplicativeFactor = multiplicativePositiveAttenuatingFactor * normalizedAvgCityWeight;
 			}
 			else
 			{
+				System.out.printf("[HTDAdv] new cities, good cities! Yummy!%n");
 				weightFlag = WeightFlag.Neg;
 				multiplicativeFactor = multiplicativeNegativeAttenuatingFactor * normalizedAvgCityWeight;
 			}
-
-			// First turn or not
-//			targetBid = (minBidHistoryWindow.size() < 1) ? marginalCost * 2 : marginalCost + 1;
-			// TODO eval
-			targetBid = marginalCost + 1;
+			
+			if (adversarialMarginal.isPresent())
+			{
+				long avgMarginals = (lastMarginalCost + adversarialMarginal.get()) / 2;
+				lastMarginalCost = Math.max(lastMarginalCost, avgMarginals);
+			}
+			else
+			{
+				long avgMarginals = lastMarginalCost;
+			}
+			
+			// TODO use adversarial margin to steal the city if it is very advantageous?
+			
+			targetBid = lastMarginalCost + 1;
 			
 			targetBid += (long) (multiplicativeFactor * targetBid);
 			
 			targetBid -= (backInPlanProb * backInPlanAttenuation) * targetBid;
 			
-			System.out.printf("[HTD] bid == %s%n", targetBid);
+			System.out.printf("[HTDAdv] bid == %s%n", targetBid);
 			return targetBid;
 		}
 	}
@@ -343,6 +543,8 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		weightFlag = WeightFlag.None;
 		lossFlag = LossFlag.None;
 		
+		System.out.printf("=== Task: %d ===%n", task.id);
+		
 		Set<Task> taskSet = new HashSet<>(currentTaskSet);
 		taskSet.add(task);
 		
@@ -351,8 +553,19 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		tempNewSolution = List.of(tempNewSolutionSLS, tempNewSolutionNeighbors).stream().min(Comparator.comparingLong(Solution::computeCost)).get();
 		lastMarginalCost = (tempNewSolution.computeCost() - currentSolution.computeCost());
-
-		return computeBid(lastMarginalCost);
+		
+		Optional<Long> adversarialMarginal = computeAdversarialMarginal(task,
+		                                                                bidTimeout - (System.currentTimeMillis() - startTime),
+		                                                                startTime);
+		
+		if (adversarialMarginal.isPresent())
+		{
+			System.out.printf("[HTDAdv] adversarialMarginal: %s%n", adversarialMarginal);
+//			adversarialMarginal = Optional.of(adversarialMarginal.get() + predictionCorrection);
+			adversarialMarginal = Optional.of(adversarialMarginal.get());
+		}
+		
+		return computeBid(adversarialMarginal);
 	}
 	
 	@Override
@@ -362,7 +575,7 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		if (currentSolution.computeCost() == 0) // Solution is empty
 		{
-			System.out.printf("[HTD] empty solution%n");
+			System.out.printf("[HTDAdv] empty solution%n");
 			return currentSolution.getPlanList();
 		}
 		
@@ -382,9 +595,9 @@ public class HeuristicHTDAuctionTemplate implements AuctionBehavior
 		
 		Solution adaptedFinalSolution = new Solution(finalCentralizedPlanList);
 		
-		System.out.printf("[HTD] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
-		System.out.printf("[HTD] totalRevenue: %d%n", totalRevenue);
-		System.out.printf("[HTD] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
+		System.out.printf("[HTDAdv] adaptedFinalSolution cost: %d%n", adaptedFinalSolution.computeCost());
+		System.out.printf("[HTDAdv] totalRevenue: %d%n", totalRevenue);
+		System.out.printf("[HTDAdv] gain: %d%n", totalRevenue - adaptedFinalSolution.computeCost());
 		
 		return adaptedFinalSolution.getPlanList();
 	}
