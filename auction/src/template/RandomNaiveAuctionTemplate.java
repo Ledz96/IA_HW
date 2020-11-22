@@ -25,7 +25,7 @@
 // *
 // */
 //@SuppressWarnings("unused")
-//public class NaiveRandomAuctionTemplate implements AuctionBehavior {
+//public class RandomNaiveAuctionTemplate implements AuctionBehavior {
 //
 //	private Topology topology;
 //	private TaskDistribution distribution;

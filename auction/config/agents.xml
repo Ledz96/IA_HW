@@ -4,17 +4,32 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### AUCTION AGENTS ### -->
-	<agent name="auction_htd">
-		<set class-path="bin/"/>
-		<set class-name="template.HeuristicHTDAuctionTemplate"/>
-	</agent>
+<!--	<agent name="auction_naive">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.RandomNaiveAuctionTemplate"/>-->
+<!--	</agent>-->
 
-	<agent name="auction_htd_adv">
-		<set class-path="bin/"/>
-		<set class-name="template.HeuristicHTDAdvAuctionTemplate"/>
-	</agent>
+<!--	<agent name="auction_safe">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.SafeHistoryAuctionTemplate"/>-->
+<!--	</agent>-->
 
-	<agent name="auction_htd_adv_2">
+<!--	<agent name="auction_htd">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.HeuristicHTDAuctionTemplate"/>-->
+<!--	</agent>-->
+
+<!--	<agent name="auction_htd_adv">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.HeuristicHTDAdvAuctionTemplate"/>-->
+<!--	</agent>-->
+
+<!--	<agent name="auction_htd_adv_2">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.HeuristicHTDAdv2AuctionTemplate"/>-->
+<!--	</agent>-->
+
+	<agent name="auction-main-23">
 		<set class-path="bin/"/>
 		<set class-name="template.HeuristicHTDAdv2AuctionTemplate"/>
 	</agent>

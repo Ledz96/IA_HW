@@ -110,8 +110,8 @@
 //		Set<Task> taskSet = new HashSet<>(currentTaskSet);
 //		taskSet.add(task);
 //
-//		Solution tempNewSolutionSLS = CentralizedSolver.slsSearch(vehicles, taskSet, bidTimeout, startTime, random);
-//		Solution tempNewSolutionNeighbors = CentralizedSolver.addTaskAndSearch(currentSolution, task);
+//		Solution tempNewSolutionNeighbors = CentralizedSolver.addTaskAndSearch(currentSolution, task, bidTimeout / 2);
+//		Solution tempNewSolutionSLS = CentralizedSolver.slsSearch(vehicles, taskSet, bidTimeout / 2, startTime, random);
 //
 //		tempNewSolution = List.of(tempNewSolutionSLS, tempNewSolutionNeighbors).stream().min(Comparator.comparingLong(Solution::computeCost)).get();
 ////		System.out.printf("[Safe] tempNewSolution: %s%n", tempNewSolution);
