@@ -24,6 +24,11 @@ public class CentralizedPlan
 		return actionList;
 	}
 	
+	public List<Integer> getResiduals()
+	{
+		return residuals;
+	}
+	
 	public CentralizedPlan(Vehicle vehicle, List<CentralizedAction> actionList) throws ExceededCapacityException
 	{
 		this.vehicle = vehicle;
@@ -167,8 +172,8 @@ public class CentralizedPlan
 		int pickupActionResidualIdx = actionList.indexOf(pickupAction) + 1;
 		int deliverActionResidualIdx = actionList.indexOf(deliverAction) + 1;
 		
-		assert actionList.remove(pickupAction);
-		assert actionList.remove(deliverAction);
+		actionList.remove(pickupAction);
+		actionList.remove(deliverAction);
 		
 		for (int i = pickupActionResidualIdx; i < deliverActionResidualIdx; i++)
 		{

@@ -153,8 +153,11 @@ public class CentralizedSolver
 		return slsSearch(selectOptimizedInitialSolution(vehicleList, tasks, random), timeout, startTime, random);
 	}
 	
-	public static Solution addTaskAndSearch(Solution solution, Task task)
+	public static Solution addTaskAndSearch(Solution solution, Task task, long timeout)
 	{
+		long startTime = System.currentTimeMillis();
+		boolean expiredTime = false;
+		
 		Set<Solution> neighbors = new HashSet<>();
 		
 		for (int planIdx = 0; planIdx < solution.getCentralizedPlanList().size(); planIdx++)
@@ -163,6 +166,15 @@ public class CentralizedSolver
 			
 			for (int insertionIndex: plan.getInsertPositions(task))
 			{
+				if ((
+						(planIdx == 0 && insertionIndex > 0) ||
+						(planIdx > 0))
+					&& System.currentTimeMillis() > startTime + timeout)
+				{
+					expiredTime = true;
+					break;
+				}
+				
 				CentralizedPlan newPlan = new CentralizedPlan(plan);
 				newPlan.insertTask(task, insertionIndex);
 				
@@ -174,6 +186,9 @@ public class CentralizedSolver
 				
 				neighbors.addAll(newSolution.computeSwapNeighbors(planIdx));
 			}
+			
+			if (expiredTime)
+				break;
 		}
 		
 		return neighbors.stream().min(Comparator.comparingLong(Solution::computeCost)).get();

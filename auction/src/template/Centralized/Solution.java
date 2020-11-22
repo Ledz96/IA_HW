@@ -142,7 +142,7 @@ public class Solution
 			.filter(j -> j != randomIndex)
 			.forEach(j -> {
 				List<CentralizedPlan> newCentralizedPlanList = centralizedPlanList.stream()
-					.map(CentralizedPlan::new)
+					.map(centralizedPlan -> new CentralizedPlan(centralizedPlan))
 					.collect(Collectors.toList());
 				
 				// TOEVAL popRandom best

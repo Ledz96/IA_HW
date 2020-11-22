@@ -1,6 +1,7 @@
 .idea/
 .settings/
 bin/
+auction/tournament/
 
 *.iml
 history.xml

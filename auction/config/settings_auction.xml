@@ -20,11 +20,15 @@
 	<set color-task-deliver="#0000ff" />
 	<set color-task-indicator="#000000" />
 	<set color-route="#99aabb" />
-	
+
+	<!-- TODO try lower times-->
 	<!-- Timeouts -->
-	<set timeout-setup="300000" />
-	<set timeout-plan="300000" />
-	<set timeout-bid="300000" />
+<!--	<set timeout-setup="30000" />-->
+<!--	<set timeout-plan="30000" />-->
+<!--	<set timeout-bid="30000" />-->
+	<set timeout-setup="2000" />
+	<set timeout-plan="2000" />
+	<set timeout-bid="2000" />
 	
 	<!-- Flags -->
 	<set flag-show-ui="true" />

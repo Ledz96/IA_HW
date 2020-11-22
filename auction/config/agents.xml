@@ -4,29 +4,19 @@
 	<!-- A list of agents and their behavior classes -->
 	
 	<!-- #### AUCTION AGENTS ### -->
-	<agent name="auction-random">
+<!--	<agent name="auction_htd">-->
+<!--		<set class-path="bin/"/>-->
+<!--		<set class-name="template.HeuristicHTDAuctionTemplate"/>-->
+<!--	</agent>-->
+
+	<agent name="auction_htd_adv">
 		<set class-path="bin/"/>
-		<set class-name="template.NaiveRandomAuctionTemplate"/>
+		<set class-name="template.HeuristicHTDAdvAuctionTemplate"/>
 	</agent>
 
-	<agent name="auction-baseline">
+	<agent name="auction_htd_adv_2">
 		<set class-path="bin/"/>
-		<set class-name="template.BaselineAuctionTemplate"/>
-	</agent>
-
-	<agent name="auction-safe">
-		<set class-path="bin/"/>
-		<set class-name="template.SafeHistoryAuctionTemplate"/>
-	</agent>
-
-	<agent name="auction-ht">
-		<set class-path="bin/"/>
-		<set class-name="template.HeuristicHTAuctionTemplate"/>
-	</agent>
-
-	<agent name="auction-htd">
-		<set class-path="bin/"/>
-		<set class-name="template.HeuristicHTDAuctionTemplate"/>
+		<set class-name="template.HeuristicHTDAdv2AuctionTemplate"/>
 	</agent>
 	
 </agents>
