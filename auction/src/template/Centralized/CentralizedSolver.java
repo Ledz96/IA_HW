@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 
 public class CentralizedSolver
 {
-	// TODO reset
+	// TODO pick definitive values
 //	private static final int N_ITER = 10000;
-	private static final int N_ITER = 10000;
+	private static final int N_ITER = 20000;
 //	private static final int STUCK_LIMIT = 1000;
-	private static final int STUCK_LIMIT = 1000;
+	private static final int STUCK_LIMIT = 2000;
 	private static final double exploreProb = 0.5;
 	
 	private static Solution selectOptimizedInitialSolution(List<Vehicle> vehicleList, Set<Task> tasks, Random random)
@@ -85,13 +85,6 @@ public class CentralizedSolver
 			                                                 .map(vehiclePlanMap::get)
 			                                                 .collect(Collectors.toList())));
 		
-		Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
-			.map(CentralizedPlan::getActionList)
-			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-			.collect(Collectors.toSet());
-		
-		assert solutionSeenTasks.equals(tasks);
-		
 		// Must keep plans sorted according to their vehicle
 		return solution;
 	}
@@ -136,19 +129,7 @@ public class CentralizedSolver
 			
 			if (random.nextDouble() < exploreProb)
 			{
-				Solution tempSolution = localChoice(solution.chooseSwapNeighbors(random, visitedNeighbors), solution);
-				
-				Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
-					.map(CentralizedPlan::getActionList)
-					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-					.collect(Collectors.toSet());
-				Set<Task> tempSolutionSeenTasks = tempSolution.getCentralizedPlanList().stream()
-					.map(CentralizedPlan::getActionList)
-					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-					.collect(Collectors.toSet());
-				assert tempSolutionSeenTasks.equals(solutionSeenTasks);
-				
-				solution = tempSolution;
+				solution = localChoice(solution.chooseSwapNeighbors(random, visitedNeighbors), solution);
 			}
 			
 			if (solution.computeCost() < localMinimum.computeCost())
@@ -183,22 +164,7 @@ public class CentralizedSolver
 	                                 Random random)
 	{
 		Solution optimizedInitialSolution = selectOptimizedInitialSolution(vehicleList, tasks, random);
-		
-		Set<Task> optimizedInitialSolutionSeenTasks = optimizedInitialSolution.getCentralizedPlanList().stream()
-			.map(CentralizedPlan::getActionList)
-			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-			.collect(Collectors.toSet());
-		assert optimizedInitialSolutionSeenTasks.equals(tasks);
-		
-		Solution solution = slsSearch(optimizedInitialSolution, timeout, startTime, random);
-		
-		Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
-			.map(CentralizedPlan::getActionList)
-			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-			.collect(Collectors.toSet());
-		assert solutionSeenTasks.equals(tasks);
-		
-		return solution;
+		return slsSearch(optimizedInitialSolution, timeout, startTime, random);
 	}
 	
 	public static Solution addTaskAndSearch(Solution solution, Task task, long timeout)
@@ -239,6 +205,23 @@ public class CentralizedSolver
 				break;
 		}
 		
-		return neighbors.stream().min(Comparator.comparingLong(Solution::computeCost)).get();
+		Optional<Solution> ret = neighbors.stream().min(Comparator.comparingLong(Solution::computeCost));
+		if (ret.isEmpty())
+		{
+			try
+			{
+				String exMsg = String.format("%s%n%s%n",
+				                             "Insufficient time for calculating any solution!",
+				                             "Minimum tested timeout: 500ms");
+				throw new Exception(exMsg);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				System.exit(1);
+			}
+		}
+		
+		return ret.get();
 	}
 }

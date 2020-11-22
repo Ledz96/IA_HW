@@ -13,8 +13,7 @@
 	<agents import="config/agents.xml" />
 	
 	<!-- define task distribution -->
-<!--	<tasks number="18" rngSeed="1234567">-->
-	<tasks number="50" rngSeed="1234567">
+	<tasks number="18" rngSeed="1234567">
 		<!--
 			the probabilities, rewards and weight of tasks
 		-->

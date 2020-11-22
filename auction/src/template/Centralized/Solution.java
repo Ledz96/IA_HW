@@ -160,22 +160,10 @@ public class Solution
 				boolean taskWasPushed = newCentralizedPlanList.get(j).pushTask(task);
 //				newCentralizedPlanList.get(j).pushTaskInRandomPosition(task, random);
 				
-				// task weight may be greater than vehicle capacity, so the push may not be successful
+				// Task weight may be greater than vehicle capacity, so the push may not be successful
 				if (taskWasPushed)
 				{
-					// Solution may be empty if one vehicle cannot take any tasks, let's avoid adding it
 					Solution newSolution = new Solution(newCentralizedPlanList);
-					
-					Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
-						.map(CentralizedPlan::getActionList)
-						.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-						.collect(Collectors.toSet());
-					Set<Task> newSolutionSeenTasks = newSolution.getCentralizedPlanList().stream()
-						.map(CentralizedPlan::getActionList)
-						.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-						.collect(Collectors.toSet());
-					assert newSolutionSeenTasks.equals(solutionSeenTasks);
-					
 					neighbors.add(newSolution);
 				}
 			});
@@ -190,38 +178,12 @@ public class Solution
 		if (neighbors.isEmpty())
 			return neighbors;
 		
-		for (Solution neighbor : neighbors)
-		{
-			Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
-				.map(CentralizedPlan::getActionList)
-				.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-				.collect(Collectors.toSet());
-			Set<Task> neighborSolutionSeenTasks = neighbor.getCentralizedPlanList().stream()
-				.map(CentralizedPlan::getActionList)
-				.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-				.collect(Collectors.toSet());
-			assert neighborSolutionSeenTasks.equals(solutionSeenTasks);
-		}
-		
 		CentralizedPlan randomCentralizedPlan = centralizedPlanList.get(randomIndex);
 		// TOEVAL visitedNeighbors best
 		if (!visitedNeighbors.contains(randomCentralizedPlan))
 //		if (true)
 		{
 			Set<Solution> swapNeighbors = computeSwapNeighbors(randomIndex);
-			
-			for (Solution neighbor : swapNeighbors)
-			{
-				Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
-					.map(CentralizedPlan::getActionList)
-					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-					.collect(Collectors.toSet());
-				Set<Task> neighborSolutionSeenTasks = neighbor.getCentralizedPlanList().stream()
-					.map(CentralizedPlan::getActionList)
-					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
-					.collect(Collectors.toSet());
-				assert neighborSolutionSeenTasks.equals(solutionSeenTasks);
-			}
 			
 			neighbors.addAll(swapNeighbors);
 			visitedNeighbors.add(randomCentralizedPlan);

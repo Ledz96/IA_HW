@@ -51,7 +51,7 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 
 	private static final Double ADV_RETAIN = 0.85;
 	
-	private static final long TIMEOUT_MARGIN = 500;
+	private static final long TIMEOUT_MARGIN = 450;
 
 	/////
 
@@ -284,7 +284,14 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 		long startTime = System.currentTimeMillis();
 		
 		System.out.printf("winner == %s%n", winner);
-//		System.out.printf("========== bids == %s ==========%n", Arrays.asList(bids));
+		System.out.printf("bids == %s%n", Arrays.asList(bids));
+		
+		// Protect ourselves from negative bids of other agents
+		// TODO only use if negative bidding is forbidden? Otherwise it could prove useful if we also bid negative
+		for (int it = 0; it < bids.length; it++)
+		{
+			bids[it] = Math.max(0, bids[it]);
+		}
 
 		// Safe
 		if (bids.length > 1)
