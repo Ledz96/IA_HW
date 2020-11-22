@@ -275,8 +275,6 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 	}
 
 	// ===========
-
-	// TODO if another agent bids a negative value, is it a problem for us? Would it be better to clamp bids[] to 0?
 	
 	@Override
 	public void auctionResult(Task task, int winner, Long[] bids) // timeout-bid
@@ -287,7 +285,6 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 		System.out.printf("bids == %s%n", Arrays.asList(bids));
 		
 		// Protect ourselves from negative bids of other agents
-		// TODO only use if negative bidding is forbidden? Otherwise it could prove useful if we also bid negative
 		for (int it = 0; it < bids.length; it++)
 		{
 			bids[it] = Math.max(0, bids[it]);
@@ -604,7 +601,10 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 		                                                          random);
 
 		tempNewSolution = List.of(tempNewSolutionSLS, tempNewSolutionNeighbors).stream().min(Comparator.comparingLong(Solution::computeCost)).get();
-		lastMarginalCost = (tempNewSolution.computeCost() - currentSolution.computeCost());
+		
+		// Keep redundant as computeBid modifies lastMarginalCost! We need the actual marginal cost after the call
+		long marginalCost = (tempNewSolution.computeCost() - currentSolution.computeCost());
+		lastMarginalCost = marginalCost;
 
 		Optional<Long> adversarialMarginal = computeAdversarialMarginal(task,
 		                                                                (bidTimeout - TIMEOUT_MARGIN) - (System.currentTimeMillis() - startTime),
@@ -617,8 +617,14 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 			adversarialMarginal = Optional.of(adversarialMarginal.get());
 		}
 		
-		// TODO check if cheating
-		return Math.max(-1L, computeBid(adversarialMarginal));
+		long totalGain = totalRevenue - currentSolution.computeCost();
+		long targetBid = computeBid(adversarialMarginal);
+		
+		// Avoid deficit
+		if (totalGain + targetBid - marginalCost < 0)
+			targetBid = marginalCost - totalGain;
+		
+		return Math.max(0L, targetBid);
 	}
 	
 	@Override
