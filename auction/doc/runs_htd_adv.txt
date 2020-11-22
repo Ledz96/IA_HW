@@ -1,0 +1,56 @@
+[HTDAdv] adaptedFinalSolution cost: 7357
+[HTDAdv] totalRevenue: 8473
+[HTDAdv] gain: 1116
+[HTD] adaptedFinalSolution cost: 4157
+[HTD] totalRevenue: 5147
+[HTD] gain: 990
+
+===
+
+[HTDAdv] adaptedFinalSolution cost: 7947
+[HTDAdv] totalRevenue: 9583
+[HTDAdv] gain: 1636
+[HTD] adaptedFinalSolution cost: 4157
+[HTD] totalRevenue: 5148
+[HTD] gain: 991
+
+[HTDAdv] adaptedFinalSolution cost: 7947
+[HTDAdv] totalRevenue: 9174
+[HTDAdv] gain: 1227
+[HTD] adaptedFinalSolution cost: 4157
+[HTD] totalRevenue: 6809
+[HTD] gain: 2652
+
+[HTDAdv] adaptedFinalSolution cost: 7357
+[HTDAdv] totalRevenue: 9481
+[HTDAdv] gain: 2124
+[HTD] adaptedFinalSolution cost: 4157
+[HTD] totalRevenue: 5147
+[HTD] gain: 990
+
+[HTDAdv] adaptedFinalSolution cost: 7947
+[HTDAdv] totalRevenue: 10208
+[HTDAdv] gain: 2261
+[HTD] adaptedFinalSolution cost: 4157
+[HTD] totalRevenue: 5148
+[HTD] gain: 991
+
+=== fixed adv + correction
+
+[HTDAdv] predictionCorrection: 2
+[HTDAdv] adaptedFinalSolution cost: 8242
+[HTDAdv] totalRevenue: 15976
+[HTDAdv] gain: 7734
+[HTD] adaptedFinalSolution cost: 5912
+[HTD] totalRevenue: 7715
+[HTD] gain: 1803
+
+=== 
+
+[HTDAdv] predictionCorrection: 694
+[HTDAdv] adaptedFinalSolution cost: 11702
+[HTDAdv] totalRevenue: 31571
+[HTDAdv] gain: 19869
+[HTD] adaptedFinalSolution cost: 1639
+[HTD] totalRevenue: 1476
+[HTD] gain: -163

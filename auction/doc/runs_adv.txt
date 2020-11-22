@@ -1,0 +1,56 @@
+[Adv] adaptedFinalSolution cost: 5222
+[Adv] totalRevenue: 8833
+[Adv] gain: 3611
+
+[HTD] adaptedFinalSolution cost: 8581
+[HTD] totalRevenue: 12896
+[HTD] gain: 4315
+
+
+
+[Adv] adaptedFinalSolution cost: 5543
+[Adv] totalRevenue: 7139
+[Adv] gain: 1596
+[HTD] adaptedFinalSolution cost: 9410
+[HTD] totalRevenue: 15619
+[HTD] gain: 6209
+
+
+
+[Adv] adaptedFinalSolution cost: 7357
+[Adv] totalRevenue: 8561
+[Adv] gain: 1204
+[HTD] adaptedFinalSolution cost: 7596
+[HTD] totalRevenue: 11739
+[HTD] gain: 4143
+
+[Adv] adaptedFinalSolution cost: 7357
+[Adv] totalRevenue: 8463
+[Adv] gain: 1106
+[HTD] adaptedFinalSolution cost: 7596
+[HTD] totalRevenue: 13371
+[HTD] gain: 5775
+
+[Adv] adaptedFinalSolution cost: 4867
+[Adv] totalRevenue: 5836
+[Adv] gain: 969
+[HTD] adaptedFinalSolution cost: 10395
+[HTD] totalRevenue: 16287
+[HTD] gain: 5892
+
+[Adv] adaptedFinalSolution cost: 4953
+[Adv] totalRevenue: 5975
+[Adv] gain: 1022
+[HTD] adaptedFinalSolution cost: 9954
+[HTD] totalRevenue: 15781
+[HTD] gain: 5827
+
+
+=== good cities ===
+
+[Adv] adaptedFinalSolution cost: 6767
+[Adv] totalRevenue: 14634
+[Adv] gain: 7867
+[HTD] adaptedFinalSolution cost: 6675
+[HTD] totalRevenue: 10714
+[HTD] gain: 4039

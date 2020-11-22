@@ -1,0 +1,110 @@
+=== adaptive adv ===
+
+[Adv] adaptedFinalSolution cost: 5083
+[Adv] totalRevenue: 12036
+[Adv] gain: 6953
+[Safe] adaptedFinalSolution cost: 7431
+[Safe] totalRevenue: 13345
+[Safe] gain: 5914
+
+[Adv] adaptedFinalSolution cost: 5782
+[Adv] totalRevenue: 12946
+[Adv] gain: 7164
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] totalRevenue: 14804
+[Safe] gain: 6223
+
+[Adv] adaptedFinalSolution cost: 5782
+[Adv] totalRevenue: 12946
+[Adv] gain: 7164
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] totalRevenue: 14804
+[Safe] gain: 6223
+
+[Adv] adaptedFinalSolution cost: 5782
+[Adv] totalRevenue: 12946
+[Adv] gain: 7164
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] totalRevenue: 14804
+[Safe] gain: 6223
+
+[Adv] adaptedFinalSolution cost: 5782
+[Adv] totalRevenue: 12823
+[Adv] gain: 7041
+[Safe] adaptedFinalSolution cost: 8581
+[Safe] totalRevenue: 14804
+[Safe] gain: 6223
+
+=== adaptive adv, good cities ===
+
+[Adv] adaptedFinalSolution cost: 7036
+[Adv] totalRevenue: 16071
+[Adv] gain: 9035
+[Safe] adaptedFinalSolution cost: 8079
+[Safe] totalRevenue: 13464
+[Safe] gain: 5385
+
+[Adv] adaptedFinalSolution cost: 6446
+[Adv] totalRevenue: 13770
+[Adv] gain: 7324
+[Safe] adaptedFinalSolution cost: 8441
+[Safe] totalRevenue: 13204
+[Safe] gain: 4763
+
+[Adv] adaptedFinalSolution cost: 7371
+[Adv] totalRevenue: 17142
+[Adv] gain: 9771
+[Safe] adaptedFinalSolution cost: 7431
+[Safe] totalRevenue: 11651
+[Safe] gain: 4220
+
+[Adv] adaptedFinalSolution cost: 7036
+[Adv] totalRevenue: 16129
+[Adv] gain: 9093
+[Safe] adaptedFinalSolution cost: 8798
+[Safe] totalRevenue: 13393
+[Safe] gain: 4595
+
+[Adv] adaptedFinalSolution cost: 7036
+[Adv] totalRevenue: 18550
+[Adv] gain: 11514
+[Safe] adaptedFinalSolution cost: 7431
+[Safe] totalRevenue: 11651
+[Safe] gain: 4220
+
+=== no adaptive, good cities ===
+
+[Adv] adaptedFinalSolution cost: 10249
+[Adv] totalRevenue: 23855
+[Adv] gain: 13606
+[Safe] adaptedFinalSolution cost: 4905
+[Safe] totalRevenue: 7933
+[Safe] gain: 3028
+
+[Adv] adaptedFinalSolution cost: 9740
+[Adv] totalRevenue: 22064
+[Adv] gain: 12324
+[Safe] adaptedFinalSolution cost: 5079
+[Safe] totalRevenue: 8109
+[Safe] gain: 3030
+
+[Adv] adaptedFinalSolution cost: 10249
+[Adv] totalRevenue: 26453
+[Adv] gain: 16204
+[Safe] adaptedFinalSolution cost: 3136
+[Safe] totalRevenue: 6164
+[Safe] gain: 3028
+
+[Adv] adaptedFinalSolution cost: 9445
+[Adv] totalRevenue: 23066
+[Adv] gain: 13621
+[Safe] adaptedFinalSolution cost: 5079
+[Safe] totalRevenue: 8109
+[Safe] gain: 3030
+
+[Adv] adaptedFinalSolution cost: 9872
+[Adv] totalRevenue: 23180
+[Adv] gain: 13308
+[Safe] adaptedFinalSolution cost: 5409
+[Safe] totalRevenue: 8439
+[Safe] gain: 3030
