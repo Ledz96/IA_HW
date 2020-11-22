@@ -126,7 +126,8 @@ public class Solution
 		return neighbors;
 	}
 	
-	private int getChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
+	private int fillWithChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
+//	private Optional<Integer> fillWithChangeVehicleNeighbors(Set<Solution> neighbors, Random random)
 	{
 		List<Integer> nonEmptyIndexes = Helper.enumerate(centralizedPlanList)
 			.filter(pair -> !pair._2.isEmpty())
@@ -134,26 +135,49 @@ public class Solution
 			.collect(Collectors.toList());
 		
 		int randomIndex = nonEmptyIndexes.stream()
+//		Optional<Integer> randomIndex = nonEmptyIndexes.stream()
 			.skip(new Double(random.nextDouble() * nonEmptyIndexes.size()).longValue())
 			.findFirst().get();
+//			.findFirst();
+
+//		if (randomIndex.isEmpty())
+//			return Optional.empty();
 		
-		// TOCHECK here we assume that all vehicles can pickup any task provided the vehicle's initial capacity
 		IntStream.range(0, centralizedPlanList.size())
 			.filter(j -> j != randomIndex)
+//			.filter(j -> j != randomIndex.get())
 			.forEach(j -> {
 				List<CentralizedPlan> newCentralizedPlanList = centralizedPlanList.stream()
-					.map(centralizedPlan -> new CentralizedPlan(centralizedPlan))
+					.map(CentralizedPlan::new)
 					.collect(Collectors.toList());
 				
 				// TOEVAL popRandom best
 //				Task task = newCentralizedPlanList.get(randomIndex).popFirstTask();
 				Task task = newCentralizedPlanList.get(randomIndex).popRandomTask(random);
+//				Task task = newCentralizedPlanList.get(randomIndex.get()).popRandomTask(random);
 				
 				// TOEVAL pushTask best
-				newCentralizedPlanList.get(j).pushTask(task);
+				boolean taskWasPushed = newCentralizedPlanList.get(j).pushTask(task);
 //				newCentralizedPlanList.get(j).pushTaskInRandomPosition(task, random);
 				
-				neighbors.add(new Solution(newCentralizedPlanList));
+				// task weight may be greater than vehicle capacity, so the push may not be successful
+				if (taskWasPushed)
+				{
+					// Solution may be empty if one vehicle cannot take any tasks, let's avoid adding it
+					Solution newSolution = new Solution(newCentralizedPlanList);
+					
+					Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
+						.map(CentralizedPlan::getActionList)
+						.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+						.collect(Collectors.toSet());
+					Set<Task> newSolutionSeenTasks = newSolution.getCentralizedPlanList().stream()
+						.map(CentralizedPlan::getActionList)
+						.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+						.collect(Collectors.toSet());
+					assert newSolutionSeenTasks.equals(solutionSeenTasks);
+					
+					neighbors.add(newSolution);
+				}
 			});
 		
 		return randomIndex;
@@ -162,14 +186,44 @@ public class Solution
 	public Set<Solution> chooseSwapNeighbors(Random random, Set<CentralizedPlan> visitedNeighbors)
 	{
 		Set<Solution> neighbors = new HashSet<>();
-		int randomIndex = getChangeVehicleNeighbors(neighbors, random);
-		CentralizedPlan randomCentralizedPlan = centralizedPlanList.get(randomIndex);
+		int randomIndex = fillWithChangeVehicleNeighbors(neighbors, random);
+		if (neighbors.isEmpty())
+			return neighbors;
 		
+		for (Solution neighbor : neighbors)
+		{
+			Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
+				.map(CentralizedPlan::getActionList)
+				.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+				.collect(Collectors.toSet());
+			Set<Task> neighborSolutionSeenTasks = neighbor.getCentralizedPlanList().stream()
+				.map(CentralizedPlan::getActionList)
+				.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+				.collect(Collectors.toSet());
+			assert neighborSolutionSeenTasks.equals(solutionSeenTasks);
+		}
+		
+		CentralizedPlan randomCentralizedPlan = centralizedPlanList.get(randomIndex);
 		// TOEVAL visitedNeighbors best
 		if (!visitedNeighbors.contains(randomCentralizedPlan))
 //		if (true)
 		{
-			neighbors.addAll(computeSwapNeighbors(randomIndex));
+			Set<Solution> swapNeighbors = computeSwapNeighbors(randomIndex);
+			
+			for (Solution neighbor : swapNeighbors)
+			{
+				Set<Task> solutionSeenTasks = getCentralizedPlanList().stream()
+					.map(CentralizedPlan::getActionList)
+					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+					.collect(Collectors.toSet());
+				Set<Task> neighborSolutionSeenTasks = neighbor.getCentralizedPlanList().stream()
+					.map(CentralizedPlan::getActionList)
+					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+					.collect(Collectors.toSet());
+				assert neighborSolutionSeenTasks.equals(solutionSeenTasks);
+			}
+			
+			neighbors.addAll(swapNeighbors);
 			visitedNeighbors.add(randomCentralizedPlan);
 		}
 		

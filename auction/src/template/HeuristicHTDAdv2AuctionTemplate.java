@@ -89,7 +89,7 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 	private final Map<Integer, Solution> advCurrentSolutionMap = new HashMap<>();
 	private final Map<Integer, Solution> advTempNewSolutionMap = new HashMap<>();
 
-	private long predictionCorrection = 0L;
+//	private long predictionCorrection = 0L;
 
 	// === ADV ===
 
@@ -323,7 +323,7 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 		}
 
 		// Decay prediction correction
-		predictionCorrection = (long) (predictionCorrection * 0.5);
+//		predictionCorrection = (long) (predictionCorrection * 0.5);
 
 		// If  our prediction is too far from the adversarial bid, update the correction coefficient for adversarial marginal
 
@@ -335,20 +335,16 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 
 		advMarginal = Math.max(0, advMarginal);
 
-		if (bids[winner] > 2 * advMarginal)
-		{
-			predictionCorrection += (bids[winner] - advMarginal) / 2;
-		}
-		else if (bids[winner] < 0.5 * advMarginal)
-		{
-			predictionCorrection -= (advMarginal - bids[winner]) / 2;
-		}
+//		if (bids[winner] > 2 * advMarginal)
+//		{
+//			predictionCorrection += (bids[winner] - advMarginal) / 2;
+//		}
+//		else if (bids[winner] < 0.5 * advMarginal)
+//		{
+//			predictionCorrection -= (advMarginal - bids[winner]) / 2;
+//		}
 
-		System.out.printf("[HTDAdv2] predictionCorrection: %s%n", predictionCorrection);
-
-		// TODO reset predictionCorrection if task is lost to a bid over marginal cost?
-
-		//
+//		System.out.printf("[HTDAdv2] predictionCorrection: %s%n", predictionCorrection);
 
 		if (winner != agent.id())
 		{
@@ -455,8 +451,7 @@ public class HeuristicHTDAdv2AuctionTemplate implements AuctionBehavior
 			targetBid = minBidHistoryWindow.stream().mapToLong(Long::longValue).min().getAsLong();
 
 			long loss = (long) (targetBid * zeroMarginalCostLossMarginProb);
-
-			// TOEVAL verify this is right
+			
 			if (adversarialMarginal.isPresent())
 			{
 				long attenuatedAdvMarginal = (long) (ADV_RETAIN * adversarialMarginal.get());

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 public class CentralizedSolver
 {
+	// TODO reset
 //	private static final int N_ITER = 10000;
 	private static final int N_ITER = 10000;
 //	private static final int STUCK_LIMIT = 1000;
@@ -33,6 +34,7 @@ public class CentralizedSolver
 			PriorityQueue<Pair<Vehicle, Double>> vehicleDistanceQueue = new PriorityQueue<>(comparator);
 			vehicleDistanceQueue
 				.addAll(vehiclePlanMap.entrySet().stream()
+							.filter(entry -> entry.getKey().capacity() >= randomTask.weight)
 					        .map(entry -> new Pair<>(entry.getKey(),
 					                                 randomTask.pickupCity.distanceTo(entry.getValue().getCurrentCity())))
 					        .collect(Collectors.toList()));
@@ -51,17 +53,23 @@ public class CentralizedSolver
 				else
 				{
 					// Get carried task with closest delivery city
-					Task deliverTask = vehiclePlanMap.get(vehicleDistancePair._1).getCarriedTasks().stream()
-						.min(Comparator.comparingDouble(task -> task.deliveryCity.distanceTo(randomTask.pickupCity)))
-						.get();
+//					Task deliverTask = vehiclePlanMap.get(vehicleDistancePair._1).getCarriedTasks().stream()
+//						.min(Comparator.comparingDouble(task -> task.deliveryCity.distanceTo(randomTask.pickupCity)))
+//						.get();
 					
-					vehiclePlanMap.get(vehicleDistancePair._1)
-						.addAction(new CentralizedAction(CentralizedAction.ActionType.Deliver, deliverTask));
+					Optional<Task> deliverTask = vehiclePlanMap.get(vehicleDistancePair._1).getCarriedTasks().stream()
+						.min(Comparator.comparingDouble(task -> task.deliveryCity.distanceTo(randomTask.pickupCity)));
 					
-					vehicleDistanceQueue
-						.add(new Pair<>(vehicleDistancePair._1,
-						                vehiclePlanMap.get(vehicleDistancePair._1)
-							                .getCurrentCity().distanceTo(randomTask.pickupCity)));
+					if (deliverTask.isPresent())
+					{
+						vehiclePlanMap.get(vehicleDistancePair._1)
+							.addAction(new CentralizedAction(CentralizedAction.ActionType.Deliver, deliverTask.get()));
+						
+						vehicleDistanceQueue
+							.add(new Pair<>(vehicleDistancePair._1,
+							                vehiclePlanMap.get(vehicleDistancePair._1)
+								                .getCurrentCity().distanceTo(randomTask.pickupCity)));
+					}
 				}
 			}
 		}
@@ -73,13 +81,26 @@ public class CentralizedSolver
 			.forEach(plan -> plan.getCarriedTasks()
 				.forEach(task -> plan.addAction(new CentralizedAction(CentralizedAction.ActionType.Deliver, task))));
 		
+		Solution solution = new Solution(new ArrayList<>(vehicleList.stream()
+			                                                 .map(vehiclePlanMap::get)
+			                                                 .collect(Collectors.toList())));
+		
+		Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
+			.map(CentralizedPlan::getActionList)
+			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+			.collect(Collectors.toSet());
+		
+		assert solutionSeenTasks.equals(tasks);
+		
 		// Must keep plans sorted according to their vehicle
-		return new Solution(new ArrayList<>(vehicleList.stream()
-			                                    .map(vehiclePlanMap::get).collect(Collectors.toList())));
+		return solution;
 	}
 	
-	private static Solution localChoice(Set<Solution> solutionSet)
+	private static Solution localChoice(Set<Solution> solutionSet, Solution defaultSolution)
 	{
+		if (solutionSet.isEmpty())
+			return defaultSolution;
+		
 		assert solutionSet.stream()
 			.map(Solution::getCentralizedPlanList)
 			.anyMatch(planList -> planList.stream()
@@ -115,7 +136,19 @@ public class CentralizedSolver
 			
 			if (random.nextDouble() < exploreProb)
 			{
-				solution = localChoice(solution.chooseSwapNeighbors(random, visitedNeighbors));
+				Solution tempSolution = localChoice(solution.chooseSwapNeighbors(random, visitedNeighbors), solution);
+				
+				Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
+					.map(CentralizedPlan::getActionList)
+					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+					.collect(Collectors.toSet());
+				Set<Task> tempSolutionSeenTasks = tempSolution.getCentralizedPlanList().stream()
+					.map(CentralizedPlan::getActionList)
+					.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+					.collect(Collectors.toSet());
+				assert tempSolutionSeenTasks.equals(solutionSeenTasks);
+				
+				solution = tempSolution;
 			}
 			
 			if (solution.computeCost() < localMinimum.computeCost())
@@ -133,7 +166,6 @@ public class CentralizedSolver
 				solution = initialSolution;
 				stuck = 0;
 				
-				// TOEVAL better with than without
 				visitedNeighbors = new HashSet<>();
 			}
 			
@@ -150,7 +182,23 @@ public class CentralizedSolver
 	                                 long startTime,
 	                                 Random random)
 	{
-		return slsSearch(selectOptimizedInitialSolution(vehicleList, tasks, random), timeout, startTime, random);
+		Solution optimizedInitialSolution = selectOptimizedInitialSolution(vehicleList, tasks, random);
+		
+		Set<Task> optimizedInitialSolutionSeenTasks = optimizedInitialSolution.getCentralizedPlanList().stream()
+			.map(CentralizedPlan::getActionList)
+			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+			.collect(Collectors.toSet());
+		assert optimizedInitialSolutionSeenTasks.equals(tasks);
+		
+		Solution solution = slsSearch(optimizedInitialSolution, timeout, startTime, random);
+		
+		Set<Task> solutionSeenTasks = solution.getCentralizedPlanList().stream()
+			.map(CentralizedPlan::getActionList)
+			.flatMap(actionList -> actionList.stream().map(CentralizedAction::getTask))
+			.collect(Collectors.toSet());
+		assert solutionSeenTasks.equals(tasks);
+		
+		return solution;
 	}
 	
 	public static Solution addTaskAndSearch(Solution solution, Task task, long timeout)
